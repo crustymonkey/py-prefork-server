@@ -1,6 +1,6 @@
 import ChildEvents as ce
 import multiprocessing as mp
-import threading , socket , signal , select
+import threading , socket , signal , select , os
 
 __all__ = ['Manager']
 
@@ -28,7 +28,7 @@ class Manager(object):
 
     def __init__(self , childClass , maxServers=20 , minServers=5 , 
             minSpareServers=2 , maxSpareServers=10 , maxRequests=0 ,  
-            bindIp='127.0.0.1' , port=10000 , proto='tcp' , listen=5)
+            bindIp='127.0.0.1' , port=10000 , proto='tcp' , listen=5):
         """
         childClass<BaseChild>       : An implentation of BaseChild to define
                                       the child processes
@@ -57,7 +57,7 @@ class Manager(object):
             raise ManagerError('Invalid protocol %s, must be in: %r' % (proto ,
                 self.validProtocols))
         self.listen = int(listen)
-        self._accSock = None
+        self.accSock = None
         self._stop = threading.Event()
         self._children = {}
         self._poll = select.poll()
@@ -68,10 +68,11 @@ class Manager(object):
         self._poll.register(parPipe.fileno() , self._pollMask)
         pid = os.fork()
         if not pid:
-            ch = self.childClass(self._accSock , self.maxReqs , chPipe)
+            ch = self.childClass(self.accSock , self.maxReqs , chPipe , 
+                self.proto)
             ch.run()
         else:
-            self.children[pid] = ManagerChild(pid , parPipe)
+            self._children[parPipe.fileno()] = ManagerChild(pid , parPipe)
             return
 
     def _killChild(self , child , background=True):
@@ -80,11 +81,17 @@ class Manager(object):
         completion in a thread.
         """
         fd = child.conn.fileno()
-        child.conn.send([ce.CLOSE , ''])
-        child.close()
-        if unreg:
+        try:
+            child.conn.send([ce.CLOSE , ''])
+            child.close()
+        except IOError:
+            pass
+        try:
             self._poll.unregister(fd)
-            del self.children[fd]
+        except:
+            pass
+        if fd in self._children:
+            del self._children[fd]
         if background:
             t = threading.Thread(target=os.waitpid , args=(child.pid , 0))
             t.daemon = True
@@ -97,13 +104,15 @@ class Manager(object):
         event = int(event)
         if event & ce.EXITING:
             if event == ce.EXITING_ERROR:
-                self.log('Child %d exited due to error: %s' % msg)
+                self.log('Child %d exited due to error: %s' % (child.pid , msg))
             fd = child.conn.fileno()
             self._poll.unregister(fd)
-            del self.children[fd]
+            del self._children[fd]
             child.close()
             os.waitpid(child.pid , 0)
         else:
+            print 'Received %s event from %d: %s' % (
+                ce.STRMAP[event] , child.pid , msg)
             child.curState = int(event)
             child.totalProcessed = int(msg)
 
@@ -113,11 +122,14 @@ class Manager(object):
         accordingly
         """
         totalBusy = 0
-        children = self.children.values()
+        children = self._children.values()
         numChildren = len(children)
+        #print 'numchildren: %d ; minServers: %d' % (numChildren , 
+        #    self.minServers)
         for ch in children:
-            if ch.curState and ce.BUSY:
+            if ch.curState & ce.BUSY:
                 totalBusy += 1
+        #print 'Totalbusy: %d ; numChildren: %d' % (totalBusy , numChildren)
         spares = numChildren - totalBusy
         if spares < self.minSpares:
             # We need to fork more children
@@ -136,6 +148,9 @@ class Manager(object):
             # Send closes
             for ch in children[:toKill]:
                 self._killChild(ch)
+        if numChildren < self.minServers:
+            for i in xrange(self.minServers - numChildren):
+                self._startChild()
 
     def _initChildren(self):
         for i in range(self.minServers):
@@ -149,9 +164,10 @@ class Manager(object):
         proto = socket.SOCK_STREAM
         if self.proto == 'udp':
             proto = socket.SOCK_DGRAM
-        self._accSock = socket.socket(socket.AF_INET , proto)
-        self._accSock.bind(addr)
-        self._accSock.listen(self.listen)
+        self.accSock = socket.socket(socket.AF_INET , proto)
+        self.accSock.settimeout(0.01)
+        self.accSock.bind(addr)
+        self.accSock.listen(self.listen)
 
     def _signalSetup(self):
         # Set the signal handlers
@@ -161,21 +177,37 @@ class Manager(object):
 
     def _loop(self):
         while True:
+            events = []
             if self._stop.isSet():
                 break
-            events = self._poll.poll(0.001)
+            try:
+                events = self._poll.poll(1)
+            except select.error:
+                # When a signal is received, it can interrupt the system call
+                # and break things with an improper exit
+                pass
             for fd , e in events:
-                ch = self.children[fd]
-                self._handleChildEvent(ch)
+                if fd in self._children:
+                    ch = self._children[fd]
+                    self._handleChildEvent(ch)
+                else:
+                    try:
+                        self._poll.unregister(fd)
+                    except Exception , e:
+                        self.log('Error unregistering %d: %s; %s' % (fd , e))
+                    try:
+                        os.close(fd)
+                    except Exception , e:
+                        self.log('Error closing child pipe: %s' % e)
             self._assessState()
             
     def _shutdownServer(self):
         self.log('Starting server shutdown')
-        children = self.children.values()
+        children = self._children.values()
         # First loop through and tell the children to close
         for ch in children:
             self._killChild(ch , False)
-        self._accSock.close()
+        self.accSock.close()
         self.log('Server shutdown completed')
     
     def run(self):
@@ -225,7 +257,7 @@ class Manager(object):
         return
 
     # Signal handling.  These can be overridden in a subclass as well
-    def hupHander(self , frame , num):
+    def hupHandler(self , frame , num):
         """
         Handle a SIGHUP.  By default, this does nothing
         """

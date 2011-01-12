@@ -1,14 +1,14 @@
 import ChildEvents as ce
-import select
+import select , types , socket , os , time
 
-__all__ == ['BaseChild']
+__all__ = ['BaseChild']
 
 class BaseChild(object):
     """
     Defines the base child that should be inherited and the hooks should
     be overriden for use within the Manager
     """
-    def __init__(self , accSock , maxReqs , chConn):
+    def __init__(self , accSock , maxReqs , chConn , proto):
         """
         Initialize the passed in child info and call the initialize() hook
         """
@@ -19,7 +19,10 @@ class BaseChild(object):
         self._pollMask = select.POLLIN | select.POLLPRI
         self._poll.register(self._accSock.fileno() , self._pollMask)
         self._poll.register(self._chConn.fileno() , self._pollMask)
+        self.proto = proto
         self.reqsHandled = 0
+        # The "conn" will be a socket connection object if this is a tcp 
+        # server, and will actually be the payload if this is a udp server
         self.conn = None
         self.addr = None
         self.closed = False
@@ -27,7 +30,7 @@ class BaseChild(object):
         self.initialize()
 
     def _closeConn(self):
-        if self.conn:
+        if self.conn and isinstance(self.conn , socket._socketobject):
             self.conn.close()
 
     def _waiting(self):
@@ -57,7 +60,17 @@ class BaseChild(object):
         This is the workhorse that actually accepts the connection
         and calls all the hooks
         """
-        self.conn , self.addr = self._accSock.accept()
+        op = self._accSock.accept
+        if self.proto == 'udp':
+            op = self._accSock.recvfrom
+        try:
+            self.conn , self.addr = op()
+        except socket.error:
+            # There is a condition where more than 1 process can end up here
+            # on a single connection.  The second one (this one, if we get 
+            # here) will timeout
+            return
+        self._busy()
         self.postAccept()
         if self.allowDeny():
             self.processRequest()
@@ -65,33 +78,40 @@ class BaseChild(object):
             self.requestDenied()
         self._closeConn()
         self.postProcessRequest()
+        self._waiting()
 
     def _loop(self):
         while True:
-            events = self._poll.poll()
+            events = []
+            try:
+                events = self._poll.poll()
+            except select.error , e:
+                # This happens when the system call is interrupted
+                pass
             for fd , e in events:
                 if fd == self._accSock.fileno():
                     try:
                         self._handleConnection()
                     except Exception , e:
                         self._error(e)
-                        self._shutdown()
+                        self._shutdown(1)
                     self.reqsHandled += 1
                 elif fd == self._chConn.fileno():
                     self._handleParEvent()
             if self.closed:
                 self._shutdown()
-            if self.reqsHandled >= self._maxReqs:
+            if self._maxReqs > 0 and self.reqsHandled >= self._maxReqs:
                 self._handledMaxReqs()
                 self._shutdown()
 
-    def _shutdown(self):
+    def _shutdown(self , status=0):
         self._poll.unregister(self._chConn.fileno())
         self._poll.unregister(self._accSock.fileno())
         self._chConn.close()
         self._accSock.close()
         self.shutdown()
-        os._exit()
+        time.sleep(0.1)
+        os._exit(status)
             
     def run(self):
         self._loop()
