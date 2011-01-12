@@ -61,15 +61,22 @@ class BaseChild(object):
         and calls all the hooks
         """
         op = self._accSock.accept
-        if self.proto == 'udp':
-            op = self._accSock.recvfrom
-        try:
-            self.conn , self.addr = op()
-        except socket.error:
-            # There is a condition where more than 1 process can end up here
-            # on a single connection.  The second one (this one, if we get 
-            # here) will timeout
-            return
+        if self.proto == 'tcp':
+            try:
+                self.conn , self.addr = self._accSock.accept()
+            except socket.error:
+                # There is a condition where more than 1 process can end up here
+                # on a single connection.  The second one (this one, if we get 
+                # here) will timeout
+                return
+        else:
+            try:
+                self.conn , self.addr = self._accSock.recvfrom(8192)
+            except socket.error:
+                # There is a condition where more than 1 process can end up here
+                # on a single connection.  The second one (this one, if we get 
+                # here) will timeout
+                return
         self._busy()
         self.postAccept()
         if self.allowDeny():
