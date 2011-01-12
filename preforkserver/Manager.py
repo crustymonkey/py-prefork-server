@@ -111,8 +111,6 @@ class Manager(object):
             child.close()
             os.waitpid(child.pid , 0)
         else:
-            print 'Received %s event from %d: %s' % (
-                ce.STRMAP[event] , child.pid , msg)
             child.curState = int(event)
             child.totalProcessed = int(msg)
 
@@ -124,12 +122,9 @@ class Manager(object):
         totalBusy = 0
         children = self._children.values()
         numChildren = len(children)
-        #print 'numchildren: %d ; minServers: %d' % (numChildren , 
-        #    self.minServers)
         for ch in children:
             if ch.curState & ce.BUSY:
                 totalBusy += 1
-        #print 'Totalbusy: %d ; numChildren: %d' % (totalBusy , numChildren)
         spares = numChildren - totalBusy
         if spares < self.minSpares:
             # We need to fork more children
