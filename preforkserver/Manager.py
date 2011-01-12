@@ -52,7 +52,7 @@ class Manager(object):
         self.maxReqs = int(maxRequests)
         self.bindIp = bindIp
         self.port = int(port)
-        self.proto = proto
+        self.proto = proto.lower()
         if proto not in self.validProtocols:
             raise ManagerError('Invalid protocol %s, must be in: %r' % (proto ,
                 self.validProtocols))
@@ -162,7 +162,8 @@ class Manager(object):
         self.accSock = socket.socket(socket.AF_INET , proto)
         self.accSock.settimeout(0.01)
         self.accSock.bind(addr)
-        self.accSock.listen(self.listen)
+        if self.proto == 'tcp':
+            self.accSock.listen(self.listen)
 
     def _signalSetup(self):
         # Set the signal handlers
