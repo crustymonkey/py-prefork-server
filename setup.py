@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #
 #    Author: Jay Deiman
 #    Email: admin@splitstreams.com
@@ -18,7 +20,17 @@
 #    along with py-prefork-server.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-__version__ = '0.1.1'
 
-from BaseChild import *
-from Manager import *
+from distutils.core import setup
+from preforkserver import __version__ as version
+
+setup(name='py-prefork-server' ,
+    version=version ,
+    author='Jay Deiman' ,
+    author_email='admin@splitstreams.com' ,
+    url='http://stuffivelearned.org' ,
+    description='A simple tcp/udp prefork server library loosely modelled '
+        'after perl\'s Net::Server::Prefork' ,
+    packages=['preforkserver'] ,
+    package_dir={'preforkserver': 'preforkserver'} ,
+)
