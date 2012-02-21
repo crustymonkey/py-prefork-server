@@ -1,2 +1,4 @@
 include LICENSE
 include CHANGELOG
+include README.md
+recursive-include examples *.py
