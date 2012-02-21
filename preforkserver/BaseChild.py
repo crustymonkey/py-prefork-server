@@ -80,7 +80,6 @@ class BaseChild(object):
         This is the workhorse that actually accepts the connection
         and calls all the hooks
         """
-        op = self._accSock.accept
         if self.proto == 'tcp':
             try:
                 self.conn , self.addr = self._accSock.accept()
