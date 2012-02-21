@@ -180,6 +180,7 @@ class Manager(object):
         if self.proto == 'udp':
             proto = socket.SOCK_DGRAM
         self.accSock = socket.socket(socket.AF_INET , proto)
+        self.accSock.setsockopt(socket.SOL_SOCKET , socket.SO_REUSEADDR , 1)
         self.accSock.settimeout(0.01)
         self.accSock.bind(addr)
         if self.proto == 'tcp':
@@ -249,27 +250,57 @@ class Manager(object):
 
     # All of the following methods can be overridden in a subclass
     def preBind(self):
+        """
+        This hook is called before the main socket is created and bound
+        to the ip:port.  This is similar to the initialize() hook in the
+        child class.  You can use this to set up global variables, etc.
+        """
         return
 
     def postBind(self):
+        """
+        As you might have guessed, this is called right after the accept()
+        socket has been created and bound.
+        """
         return
 
     def preSignalSetup(self):
+        """
+        This is called before the signal handlers are set up
+        """
         return
 
     def postSignalSetup(self):
+        """
+        This is called after the signal handlers have been set.  You can
+        override the default signal handlers if you like.  More on that below.
+        """
         return
 
     def preInitChildren(self):
+        """
+        This is called before the child processes are initialized
+        """
         return
 
     def postInitChildren(self):
+        """
+        This is called after the child processes are initialized
+        """
         return
 
     def preLoop(self):
+        """
+        This is the last hook before the main server loop takes over.  
+        Any last minute setup items you wish to do should be done here
+        """
         return
 
     def preServerClose(self):
+        """
+        This is called before the server shuts down.  Any cleanup you wish
+        to take care of before termination should be done here.
+        """
         return
 
     # Signal handling.  These can be overridden in a subclass as well
