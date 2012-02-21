@@ -7,9 +7,15 @@ python server by just implementing hooks in a subclass.
 
 ## INSTALL ##
 
+You can install using the standard Python package install
+
     tar -xvzf py-prefork-server-X.X.X.tar.gz
     cd py-prefork-server-*
     python setup.py install
+
+You can also install via *pip* or *easy_install*
+
+    pip install py-prefork-server
 
 ## USAGE ##
 
