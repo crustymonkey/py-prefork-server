@@ -17,7 +17,7 @@ class TestChild(pfs.BaseChild):
     self.proto =>       This will be either tcp or udp
     self.reqsHandled => This is the number of requests this child has handled
     self.conn =>        The socket object if this is a tcp server, otherwise
-                        this will be the actual payload of the udp packet
+ -                       this will be the actual payload of the udp packet
     self.addr =>        An address tuple containing (ip , port)
     self.closed =>      A boolean, mainly for internal use, which says whether
                         this child has been set to be closed
@@ -53,8 +53,8 @@ class TestChild(pfs.BaseChild):
 
     def requestDenied(self):
         """
-        If you deny the connection in allowDeny(), you send a message using
-        this callback before the connection is closed.
+        If you deny the connection in allowDeny(), you can send a message 
+        using this callback before the connection is closed.
         """
         self.conn.sendall('I don\'t like your ip\r\n')
 
