@@ -71,7 +71,7 @@ class TestChild(pfs.BaseChild):
         self.conn.sendall('220 Go Ahead\r\n')
         fromClient = self.conn.recv(4096)
         self.conn.sendall('Thank you for your info\r\n')
-        print fromClient
+        print(fromClient)
         # When this function exits, the connection is automatically closed
 
     def postProcessRequest(self):
@@ -79,7 +79,7 @@ class TestChild(pfs.BaseChild):
         This is called after the connection is closed.  You can perform any
         maintenance/cleanup or post connection processing here.
         """
-        print 'Connection is closed, bye %s:%s' % (self.ip , self.port)
+        print('Connection is closed, bye %s:%s' % (self.ip , self.port))
 
     def shutdown(self):
         """
@@ -91,7 +91,7 @@ class TestChild(pfs.BaseChild):
         Use this to do an pre-close cleanup, like possibly closing open
         files or a database connection.
         """
-        print 'Shutting down child %d' % os.getpid()
+        print('Shutting down child %d' % os.getpid())
 
 #
 # Now, if you have no special setup needs for your Manager, you can just
@@ -108,53 +108,53 @@ class MyManager(pfs.Manager):
         to the ip:port.  This is similar to the initialize() hook in the
         child class.  You can use this to set up global variables, etc.
         """
-        print 'preBind() called in manager'
+        print('preBind() called in manager')
 
     def postBind(self):
         """
         As you might have guessed, this is called right after the accept()
         socket has been created and bound.
         """
-        print 'postBind() called in manager'
+        print('postBind() called in manager')
 
     def preSignalSetup(self):
         """
         This is called before the signal handlers are set up
         """
-        print 'preSignalSetup() called in manager'
+        print('preSignalSetup() called in manager')
 
     def postSignalSetup(self):
         """
         This is called after the signal handlers have been set.  You can
         override the default signal handlers if you like.  More on that below.
         """
-        print 'postSignalSetup() called in manager'
+        print('postSignalSetup() called in manager')
 
     def preInitChildren(self):
         """
         This is called before the child processes are initialized
         """
-        print 'preInitChildren() called in manager'
+        print('preInitChildren() called in manager')
 
     def postInitChildren(self):
         """
         This is called after the child processes are initialized
         """
-        print 'postInitChildren() called in manager'
+        print('postInitChildren() called in manager')
 
     def preLoop(self):
         """
         This is the last hook before the main server loop takes over.  
         Any last minute setup items you wish to do should be done here
         """
-        print 'preLoop() called in manager'
+        print('preLoop() called in manager')
 
     def preServerClose(self):
         """
         This is called before the server shuts down.  Any cleanup you wish
         to take care of before termination should be done here.
         """
-        print 'preServerClose() called in manager'
+        print('preServerClose() called in manager')
 
     # Signal handlers can also be overridden in the subclass of the manager.
     # I will just show you what the default implementation looks like

@@ -18,7 +18,7 @@
 #    along with py-prefork-server.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import ChildEvents as ce
+from . import ChildEvents as ce
 import multiprocessing as mp
 import threading , socket , signal , select , os
 
@@ -140,7 +140,7 @@ class Manager(object):
         accordingly
         """
         totalBusy = 0
-        children = self._children.values()
+        children = list(self._children.values())
         numChildren = len(children)
         for ch in children:
             if ch.curState & ce.BUSY:
@@ -152,7 +152,7 @@ class Manager(object):
             toFork = spares
             if diff2max - spares < 0:
                 toFork = diff2max
-            for i in xrange(toFork):
+            for i in range(toFork):
                 self._startChild()
         elif spares > self.maxSpares:
             # We have too many spares and need to kill some
@@ -164,7 +164,7 @@ class Manager(object):
             for ch in children[:toKill]:
                 self._killChild(ch)
         if numChildren < self.minServers:
-            for i in xrange(self.minServers - numChildren):
+            for i in range(self.minServers - numChildren):
                 self._startChild()
 
     def _initChildren(self):
@@ -210,17 +210,17 @@ class Manager(object):
                 else:
                     try:
                         self._poll.unregister(fd)
-                    except Exception , e:
+                    except Exception as e:
                         self.log('Error unregistering %d: %s; %s' % (fd , e))
                     try:
                         os.close(fd)
-                    except Exception , e:
+                    except Exception as e:
                         self.log('Error closing child pipe: %s' % e)
             self._assessState()
             
     def _shutdownServer(self):
         self.log('Starting server shutdown')
-        children = self._children.values()
+        children = list(self._children.values())
         # First loop through and tell the children to close
         for ch in children:
             self._killChild(ch , False)

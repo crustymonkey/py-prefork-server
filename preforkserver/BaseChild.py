@@ -18,7 +18,7 @@
 #    along with py-prefork-server.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import ChildEvents as ce
+from . import ChildEvents as ce
 import select , types , socket , os , time
 
 __all__ = ['BaseChild']
@@ -111,14 +111,14 @@ class BaseChild(object):
             events = []
             try:
                 events = self._poll.poll()
-            except select.error , e:
+            except select.error as e:
                 # This happens when the system call is interrupted
                 pass
             for fd , e in events:
                 if fd == self._accSock.fileno():
                     try:
                         self._handleConnection()
-                    except Exception , e:
+                    except Exception as e:
                         self._error(e)
                         self._shutdown(1)
                     self.reqsHandled += 1

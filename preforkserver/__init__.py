@@ -20,5 +20,5 @@
 
 __version__ = '0.1.2'
 
-from BaseChild import *
-from Manager import *
+from .BaseChild import *
+from .Manager import *
