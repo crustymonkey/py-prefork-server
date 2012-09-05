@@ -67,8 +67,15 @@ class Manager(object):
         self.childClass = childClass
         self.maxServers = int(maxServers)
         self.minServers = int(minServers)
+        if self.minServers > self.maxServers:
+            raise ManagerError('You cannot have minServers '
+                '(%d) be larger than maxServers (%d)!' % 
+                (minServers , maxServers))
         self.minSpares = int(minSpareServers)
         self.maxSpares = int(maxSpareServers)
+        if self.minSpares > self.maxSpares:
+            raise ManagerError('You cannot have minSpareServers be larger '
+                'than maxSpareServers!')
         self.maxReqs = int(maxRequests)
         self.bindIp = bindIp
         self.port = int(port)
@@ -156,7 +163,7 @@ class Manager(object):
                 toFork = diff2max
             for i in xrange(toFork):
                 self._startChild()
-        elif spares > self.maxSpares:
+        elif spares > self.maxSpares + self.minServers:
             # We have too many spares and need to kill some
             toKill = spares - self.maxSpares
             children = sorted(children ,
