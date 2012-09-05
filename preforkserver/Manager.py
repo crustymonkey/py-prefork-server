@@ -90,9 +90,11 @@ class Manager(object):
         if not pid:
             ch = self.childClass(self.accSock , self.maxReqs , chPipe , 
                 self.proto)
+            parPipe.close()
             ch.run()
         else:
             self._children[parPipe.fileno()] = ManagerChild(pid , parPipe)
+            chPipe.close()
             return
 
     def _killChild(self , child , background=True):
