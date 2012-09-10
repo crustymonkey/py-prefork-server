@@ -34,7 +34,7 @@ setup(name='py-prefork-server' ,
         'http://stuffivelearned.org/doku.php?id=programming:python:py-prefork-server' ,
     packages=['preforkserver'] ,
     package_dir={'preforkserver': 'preforkserver'} ,
-    data_files=[ ('share/preforkserver' , 'examples/*') ] ,
+    data_files=[ ('share/preforkserver' , ['examples/prefork-example.py']) ] ,
     classifiers=[
         'Development Status :: 4 - Beta' ,
         'Environment :: No Input/Output (Daemon)' ,
