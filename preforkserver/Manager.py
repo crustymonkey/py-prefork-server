@@ -235,11 +235,19 @@ class Manager(object):
             self._killChild(ch , False)
         self.accSock.close()
         self.log('Server shutdown completed')
-    
+
+    def bind(self):
+        if self.accSock is None:
+            self.preBind()
+            self._bind()
+            self.postBind()
+        else:
+            self.log("Manager server socket already bound")
+
     def run(self):
-        self.preBind()
-        self._bind()
-        self.postBind()
+        if self.accSock is None:
+            self.log("Manager server socket not bound, binding now.")
+            self.bind()
         self.preSignalSetup()
         self._signalSetup()
         self.postSignalSetup()
