@@ -90,6 +90,11 @@ class Manager(object):
         self._poll = select.poll()
         self._pollMask = select.POLLIN | select.POLLPRI
 
+        # bind the server socket
+        self.preBind()
+        self._bind()
+        self.postBind()
+
     def _startChild(self):
         parPipe , chPipe = mp.Pipe()
         self._poll.register(parPipe.fileno() , self._pollMask)
@@ -236,18 +241,7 @@ class Manager(object):
         self.accSock.close()
         self.log('Server shutdown completed')
 
-    def bind(self):
-        if self.accSock is None:
-            self.preBind()
-            self._bind()
-            self.postBind()
-        else:
-            self.log("Manager server socket already bound")
-
     def run(self):
-        if self.accSock is None:
-            self.log("Manager server socket not bound, binding now.")
-            self.bind()
         self.preSignalSetup()
         self._signalSetup()
         self.postSignalSetup()
