@@ -2,18 +2,4 @@ test.py
 MANIFEST
 dist
 
-.idea/workspace.xml
-
-.idea/vcs.xml
-
-.idea/.name
-
-.idea/encodings.xml
-
-.idea/misc.xml
-
-.idea/modules.xml
-
-.idea/py-prefork-server.iml
-
-.idea/scopes/scope_settings.xml
+.idea/*
