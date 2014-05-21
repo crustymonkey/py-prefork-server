@@ -18,7 +18,5 @@
 #    along with py-prefork-server.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __version__ import *
-from child import *
-from manager import *
-from exceptions import *
+version = (0, 2, 1)
+str_version = '.'.join(version)
