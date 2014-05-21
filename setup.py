@@ -24,7 +24,7 @@
 from distutils.core import setup
 
 setup(name='py-prefork-server' ,
-    version='0.1.4' ,
+    version='0.1.5' ,
     author='Jay Deiman' ,
     author_email='admin@splitstreams.com' ,
     url='http://stuffivelearned.org/doku.php?id=programming:python:py-prefork-server' ,

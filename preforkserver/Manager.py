@@ -90,6 +90,12 @@ class Manager(object):
         self._poll = select.poll()
         self._pollMask = select.POLLIN | select.POLLPRI
 
+        # Bind the socket now so that it can be used before run is called
+        # Addresses: https://github.com/crustymonkey/py-prefork-server/pull/3
+        self.preBind()
+        self._bind()
+        self.postBind()
+
     def _startChild(self):
         parPipe , chPipe = mp.Pipe()
         self._poll.register(parPipe.fileno() , self._pollMask)
@@ -237,9 +243,6 @@ class Manager(object):
         self.log('Server shutdown completed')
     
     def run(self):
-        self.preBind()
-        self._bind()
-        self.postBind()
         self.preSignalSetup()
         self._signalSetup()
         self.postSignalSetup()
