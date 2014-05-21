@@ -103,7 +103,7 @@ class Manager(object):
         self.post_bind()
 
     @property
-    def address(self):
+    def bound_address(self):
         """
         returns the newly bound server address as an (ip, port) tuple
         """
