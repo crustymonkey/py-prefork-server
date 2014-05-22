@@ -18,71 +18,76 @@
 #    along with py-prefork-server.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import ChildEvents as ce
-import select , types , socket , os , time
+import preforkserver.events as pfe
+from time import sleep
+import select
+import socket
+import os
 
 __all__ = ['BaseChild']
+
 
 class BaseChild(object):
     """
     Defines the base child that should be inherited and the hooks should
     be overriden for use within the Manager
     """
-    def __init__(self , accSock , maxReqs , chConn , proto):
+
+    def __init__(self, server_socket, max_requests, child_conn, protocol):
         """
         Initialize the passed in child info and call the initialize() hook
         """
-        self._accSock = accSock
-        self._maxReqs = maxReqs
-        self._chConn = chConn
+        self._server_socket = server_socket
+        self._max_requests = max_requests
+        self._child_conn = child_conn
         self._poll = select.poll()
-        self._pollMask = select.POLLIN | select.POLLPRI
-        self._poll.register(self._accSock.fileno() , self._pollMask)
-        self._poll.register(self._chConn.fileno() , self._pollMask)
-        self.proto = proto
-        self.reqsHandled = 0
+        self._poll_mask = select.POLLIN | select.POLLPRI
+        self._poll.register(self._server_socket.fileno(), self._poll_mask)
+        self._poll.register(self._child_conn.fileno(), self._poll_mask)
+        self.protocol = protocol
+        self.requests_handled = 0
         # The "conn" will be a socket connection object if this is a tcp 
         # server, and will actually be the payload if this is a udp server
         self.conn = None
-        self.addr = None
+        self.address = None
         self.closed = False
         self.error = None
         self.initialize()
 
-    def _closeConn(self):
-        if self.conn and isinstance(self.conn , socket._socketobject):
+    def _close_conn(self):
+        if self.conn and isinstance(self.conn, socket.SocketType):
             self.conn.close()
 
     def _waiting(self):
-        self._chConn.send([ce.WAITING , self.reqsHandled])
+        self._child_conn.send([pfe.WAITING, self.requests_handled])
 
     def _busy(self):
-        self._chConn.send([ce.BUSY , self.reqsHandled])
+        self._child_conn.send([pfe.BUSY, self.requests_handled])
 
-    def _error(self , msg=None):
+    def _error(self, msg=None):
         self.error = msg
-        self._chConn.send([ce.EXITING_ERROR , str(msg)])
+        self._child_conn.send([pfe.EXITING_ERROR, str(msg)])
 
-    def _handledMaxReqs(self):
-        self._chConn.send([ce.EXITING_MAX , ''])
+    def _handled_max_requests(self):
+        self._child_conn.send([pfe.EXITING_MAX, ''])
 
-    def _handleParEvent(self):
+    def _handle_parent_event(self):
         """
         Handle an event sent from the parent
         """
-        event , msg = self._chConn.recv()
+        event, msg = self._child_conn.recv()
         event = int(event)
-        if event & ce.CLOSE:
+        if event & pfe.CLOSE:
             self.closed = True
 
-    def _handleConnection(self):
+    def _handle_connection(self):
         """
         This is the workhorse that actually accepts the connection
         and calls all the hooks
         """
-        if self.proto == 'tcp':
+        if self.protocol == 'tcp':
             try:
-                self.conn , self.addr = self._accSock.accept()
+                self.conn, self.address = self._server_socket.accept()
             except socket.error:
                 # There is a condition where more than 1 process can end up here
                 # on a single connection.  The second one (this one, if we get 
@@ -90,20 +95,20 @@ class BaseChild(object):
                 return
         else:
             try:
-                self.conn , self.addr = self._accSock.recvfrom(8192)
+                self.conn, self.address = self._server_socket.recvfrom(8192)
             except socket.error:
-                # There is a condition where more than 1 process can end up here
-                # on a single connection.  The second one (this one, if we get 
-                # here) will timeout
+                # There is a condition where more than 1 process can end up 
+                # here on a single connection.  The second one (this one, 
+                # if we get here) will timeout
                 return
         self._busy()
-        self.postAccept()
-        if self.allowDeny():
-            self.processRequest()
+        self.post_accept()
+        if self.allow_deny():
+            self.process_request()
         else:
-            self.requestDenied()
-        self._closeConn()
-        self.postProcessRequest()
+            self.request_denied()
+        self._close_conn()
+        self.post_process_request()
         self._waiting()
 
     def _loop(self):
@@ -111,34 +116,34 @@ class BaseChild(object):
             events = []
             try:
                 events = self._poll.poll()
-            except select.error , e:
+            except select.error, e:
                 # This happens when the system call is interrupted
                 pass
-            for fd , e in events:
-                if fd == self._accSock.fileno():
+            for fd, e in events:
+                if fd == self._server_socket.fileno():
                     try:
-                        self._handleConnection()
-                    except Exception , e:
+                        self._handle_connection()
+                    except Exception, e:
                         self._error(e)
                         self._shutdown(1)
-                    self.reqsHandled += 1
-                elif fd == self._chConn.fileno():
-                    self._handleParEvent()
+                    self.requests_handled += 1
+                elif fd == self._child_conn.fileno():
+                    self._handle_parent_event()
             if self.closed:
                 self._shutdown()
-            if self._maxReqs > 0 and self.reqsHandled >= self._maxReqs:
-                self._handledMaxReqs()
+            if 0 < self._max_requests <= self.requests_handled:
+                self._handled_max_requests()
                 self._shutdown()
 
-    def _shutdown(self , status=0):
-        self._poll.unregister(self._chConn.fileno())
-        self._poll.unregister(self._accSock.fileno())
-        self._chConn.close()
-        self._accSock.close()
+    def _shutdown(self, status=0):
+        self._poll.unregister(self._child_conn.fileno())
+        self._poll.unregister(self._server_socket.fileno())
+        self._child_conn.close()
+        self._server_socket.close()
         self.shutdown()
-        time.sleep(0.1)
+        sleep(0.1)
         os._exit(status)
-            
+
     def run(self):
         self._loop()
 
@@ -150,7 +155,7 @@ class BaseChild(object):
         """
         return
 
-    def postAccept(self):
+    def post_accept(self):
         """
         self.conn and self.addr are initialized here since a new connection
         has been established.  You can make any modifications/setup needed 
@@ -158,28 +163,28 @@ class BaseChild(object):
         """
         return
 
-    def allowDeny(self):
+    def allow_deny(self):
         """
         Return True (default) from this hook to allow the connection and False
         to close the socket
         """
         return True
 
-    def requestDenied(self):
+    def request_denied(self):
         """
         This hook is called on a denied connection.  If you wish to send
         a message to the client before the socket is closed, do so here.
         """
         return
 
-    def processRequest(self):
+    def process_request(self):
         """
         This hook is called for an allowed connection.  Use self.conn here to
         send and receive info from the client
         """
         return
 
-    def postProcessRequest(self):
+    def post_process_request(self):
         """
         This hook is called after the connection has been processed and the
         socket closed.  You can do any maintainance/cleanup here.

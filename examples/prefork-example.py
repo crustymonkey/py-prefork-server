@@ -32,15 +32,15 @@ class TestChild(pfs.BaseChild):
         self.myInstanceVar = 'value'
         self.blacklist = set(['10.0.0.1'])
 
-    def postAccept(self):
+    def post_accept(self):
         """
         self.conn and self.addr are set before this is called as a new
         connection has been established.  You can make any modifications/setup
         before "processRequest" is called.
         """
-        self.ip , self.port = self.addr
+        self.ip , self.port = self.address
 
-    def allowDeny(self):
+    def allow_deny(self):
         """
         You can use this hook to refuse the connection based on the self.conn
         and self.addr variables that have been set.  Return True (default)
@@ -51,14 +51,14 @@ class TestChild(pfs.BaseChild):
             return False
         return True
 
-    def requestDenied(self):
+    def request_denied(self):
         """
         If you deny the connection in allowDeny(), you can send a message 
         using this callback before the connection is closed.
         """
         self.conn.sendall('I don\'t like your ip\r\n')
 
-    def processRequest(self):
+    def process_request(self):
         """
         This is where you are processing the actual request.  You should use
         your self.conn socket to send and receive data from your client in 
@@ -74,7 +74,7 @@ class TestChild(pfs.BaseChild):
         print fromClient
         # When this function exits, the connection is automatically closed
 
-    def postProcessRequest(self):
+    def post_process_request(self):
         """
         This is called after the connection is closed.  You can perform any
         maintenance/cleanup or post connection processing here.
@@ -102,7 +102,7 @@ class TestChild(pfs.BaseChild):
 #
 
 class MyManager(pfs.Manager):
-    def preBind(self):
+    def pre_bind(self):
         """
         This hook is called before the main socket is created and bound
         to the ip:port.  This is similar to the initialize() hook in the
@@ -110,46 +110,46 @@ class MyManager(pfs.Manager):
         """
         print 'preBind() called in manager'
 
-    def postBind(self):
+    def post_bind(self):
         """
         As you might have guessed, this is called right after the accept()
         socket has been created and bound.
         """
         print 'postBind() called in manager'
 
-    def preSignalSetup(self):
+    def pre_signal_setup(self):
         """
         This is called before the signal handlers are set up
         """
         print 'preSignalSetup() called in manager'
 
-    def postSignalSetup(self):
+    def post_signal_setup(self):
         """
         This is called after the signal handlers have been set.  You can
         override the default signal handlers if you like.  More on that below.
         """
         print 'postSignalSetup() called in manager'
 
-    def preInitChildren(self):
+    def pre_init_children(self):
         """
         This is called before the child processes are initialized
         """
         print 'preInitChildren() called in manager'
 
-    def postInitChildren(self):
+    def post_init_children(self):
         """
         This is called after the child processes are initialized
         """
         print 'postInitChildren() called in manager'
 
-    def preLoop(self):
+    def pre_loop(self):
         """
         This is the last hook before the main server loop takes over.  
         Any last minute setup items you wish to do should be done here
         """
         print 'preLoop() called in manager'
 
-    def preServerClose(self):
+    def pre_server_close(self):
         """
         This is called before the server shuts down.  Any cleanup you wish
         to take care of before termination should be done here.
@@ -160,14 +160,14 @@ class MyManager(pfs.Manager):
     # I will just show you what the default implementation looks like
     # here.  If you do override intHandler or termHandler, make sure you
     # call the super() method
-    def hupHandler(self , frame , num):
+    def hup_handler(self , frame , num):
         """
         This handles a SIGHUP.  If you have a config for your server, you
         could reload that here.  By default, this just ignores the signal.
         """
         return
 
-    def intHandler(self , frame , num):
+    def int_handler(self , frame , num):
         """
         This handles a SIGINT.  The default is set an internal "stop" event
         to gracefully shutdown.  If you override this, call the super() so
@@ -175,7 +175,7 @@ class MyManager(pfs.Manager):
         """
         self._stop.set()
 
-    def termHandler(self , frame , num):
+    def term_handler(self , frame , num):
         """
         This handles a SIGTERM.  This does the same thing as intHandler()
         """
