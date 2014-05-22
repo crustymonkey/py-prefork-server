@@ -19,4 +19,4 @@
 #
 
 version = (0, 2, 0)
-str_version = '.'.join(version)
+str_version = '.'.join([ str(i) for i in  version ])
