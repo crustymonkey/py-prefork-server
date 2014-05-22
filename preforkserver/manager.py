@@ -87,8 +87,8 @@ class Manager(object):
         self.port = int(port)
         self.protocol = protocol.lower()
         if protocol not in self.validProtocols:
-            raise ManagerError('Invalid protocol %s, must be in: %r' % (protocol,
-                                                                        self.validProtocols))
+            raise ManagerError('Invalid protocol %s, must be in: %r' % 
+                (protocol, self.validProtocols))
         self.listen = int(listen)
         self.server_socket = None
         self._stop = Event()
@@ -114,12 +114,13 @@ class Manager(object):
         self._poll.register(parent_pipe.fileno(), self._pollMask)
         pid = os.fork()
         if not pid:
-            ch = self._ChildClass(self.server_socket, self.max_requests, child_pipe,
-                                  self.protocol)
+            ch = self._ChildClass(self.server_socket, self.max_requests, 
+                child_pipe, self.protocol)
             parent_pipe.close()
             ch.run()
         else:
-            self._children[parent_pipe.fileno()] = ManagerChild(pid, parent_pipe)
+            self._children[parent_pipe.fileno()] = ManagerChild(pid, 
+                parent_pipe)
             child_pipe.close()
             return
 
@@ -186,8 +187,8 @@ class Manager(object):
             # We have too many spares and need to kill some
             to_kill = spares - self.max_spares
             children = sorted(children,
-                              cmp=lambda x, y: cmp(x.totalProcessed, y.totalProcessed),
-                              reverse=True)
+                cmp=lambda x, y: cmp(x.totalProcessed, y.totalProcessed),
+                reverse=True)
             # Send closes
             for ch in children[:to_kill]:
                 self._kill_child(ch)

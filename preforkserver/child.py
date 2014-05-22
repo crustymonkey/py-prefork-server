@@ -21,7 +21,6 @@
 from preforkserver.events import WAITING, BUSY, EXITING_ERROR, EXITING_MAX, CLOSE
 from select import poll, POLLIN, POLLPRI
 from time import sleep
-from socket import SocketType
 import socket
 import select
 import os
@@ -57,7 +56,7 @@ class BaseChild(object):
         self.initialize()
 
     def _close_conn(self):
-        if self.conn and isinstance(self.conn, SocketType):
+        if self.conn and isinstance(self.conn, socket.SocketType):
             self.conn.close()
 
     def _waiting(self):
@@ -99,9 +98,9 @@ class BaseChild(object):
             try:
                 self.conn, self.address = self._server_socket.recvfrom(8192)
             except socket.error:
-                # There is a condition where more than 1 process can end up here
-                # on a single connection.  The second one (this one, if we get 
-                # here) will timeout
+                # There is a condition where more than 1 process can end up 
+                # here on a single connection.  The second one (this one, 
+                # if we get here) will timeout
                 return
         self._busy()
         self.post_accept()
