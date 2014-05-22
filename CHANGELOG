@@ -1,4 +1,10 @@
 -------------
+Version 0.2.0
+-------------
+
+* Changed the entire API for PEP 8 compliance (mostly)
+
+-------------
 Version 0.1.5
 -------------
 
