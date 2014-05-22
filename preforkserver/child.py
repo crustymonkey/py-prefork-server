@@ -18,11 +18,10 @@
 #    along with py-prefork-server.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from preforkserver.events import WAITING, BUSY, EXITING_ERROR, EXITING_MAX, CLOSE
-from select import poll, POLLIN, POLLPRI
+import preforkserver.events as pfe
 from time import sleep
-import socket
 import select
+import socket
 import os
 
 __all__ = ['BaseChild']
@@ -41,8 +40,8 @@ class BaseChild(object):
         self._server_socket = server_socket
         self._max_requests = max_requests
         self._child_conn = child_conn
-        self._poll = poll()
-        self._poll_mask = POLLIN | POLLPRI
+        self._poll = select.poll()
+        self._poll_mask = select.POLLIN | select.POLLPRI
         self._poll.register(self._server_socket.fileno(), self._poll_mask)
         self._poll.register(self._child_conn.fileno(), self._poll_mask)
         self.protocol = protocol
@@ -60,17 +59,17 @@ class BaseChild(object):
             self.conn.close()
 
     def _waiting(self):
-        self._child_conn.send([WAITING, self.requests_handled])
+        self._child_conn.send([pfe.WAITING, self.requests_handled])
 
     def _busy(self):
-        self._child_conn.send([BUSY, self.requests_handled])
+        self._child_conn.send([pfe.BUSY, self.requests_handled])
 
     def _error(self, msg=None):
         self.error = msg
-        self._child_conn.send([EXITING_ERROR, str(msg)])
+        self._child_conn.send([pfe.EXITING_ERROR, str(msg)])
 
     def _handled_max_requests(self):
-        self._child_conn.send([EXITING_MAX, ''])
+        self._child_conn.send([pfe.EXITING_MAX, ''])
 
     def _handle_parent_event(self):
         """
@@ -78,7 +77,7 @@ class BaseChild(object):
         """
         event, msg = self._child_conn.recv()
         event = int(event)
-        if event & CLOSE:
+        if event & pfe.CLOSE:
             self.closed = True
 
     def _handle_connection(self):

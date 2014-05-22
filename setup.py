@@ -29,11 +29,13 @@ setup(name='py-prefork-server',
       version=str_version,
       author='Jay Deiman',
       author_email='admin@splitstreams.com',
-      url='http://stuffivelearned.org/doku.php?id=programming:python:py-prefork-server',
+      url='http://stuffivelearned.org/doku.php?id=programming:python:'
+          'py-prefork-server',
       description='A simple tcp/udp prefork server library loosely modelled '
-                  'after perl\'s Net::Server::Prefork',
+          'after perl\'s Net::Server::Prefork',
       long_description='Full documentatation is available at: '
-                       'http://stuffivelearned.org/doku.php?id=programming:python:py-prefork-server',
+          'http://stuffivelearned.org/doku.php?id=programming:python:'
+          'py-prefork-server',
       packages=['preforkserver'],
       package_dir={'preforkserver': 'preforkserver'},
       data_files=[('share/preforkserver', ['examples/prefork-example.py'])],

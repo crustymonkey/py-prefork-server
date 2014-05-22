@@ -19,13 +19,13 @@
 #
 
 from preforkserver.exceptions import ManagerError
-from preforkserver.events import WAITING, CLOSE, EXITING, EXITING_ERROR, BUSY
-from multiprocessing import Pipe
-from threading import Event, Thread
-from signal import SIGHUP, SIGINT, SIGTERM, signal
-from select import poll, POLLIN, POLLPRI
+import preforkserver.events as pfe
+import multiprocessing as mp
+import threading
 import select
-from socket import SOCK_STREAM, SOCK_DGRAM, socket, AF_INET, SOL_SOCKET, SO_REUSEADDR
+import signal
+import select
+import socket
 import os
 
 __all__ = ['Manager']
@@ -39,7 +39,7 @@ class ManagerChild(object):
     def __init__(self, pid, parent_conn):
         self.pid = pid
         self.conn = parent_conn
-        self.current_state = WAITING
+        self.current_state = pfe.WAITING
         self.total_processed = 0
 
     def close(self):
@@ -91,10 +91,10 @@ class Manager(object):
                 (protocol, self.validProtocols))
         self.listen = int(listen)
         self.server_socket = None
-        self._stop = Event()
+        self._stop = threading.Event()
         self._children = {}
-        self._poll = poll()
-        self._pollMask = POLLIN | POLLPRI
+        self._poll = select.poll()
+        self._pollMask = select.POLLIN | select.POLLPRI
 
         # Bind the socket now so that it can be used before run is called
         # Addresses: https://github.com/crustymonkey/py-prefork-server/pull/3
@@ -110,7 +110,10 @@ class Manager(object):
         return self.server_socket.getsockname()
 
     def _start_child(self):
-        parent_pipe, child_pipe = Pipe()
+        """
+        Fork off a child and set up communication pipes
+        """
+        parent_pipe, child_pipe = mp.Pipe()
         self._poll.register(parent_pipe.fileno(), self._pollMask)
         pid = os.fork()
         if not pid:
@@ -131,7 +134,7 @@ class Manager(object):
         """
         fd = child.conn.fileno()
         try:
-            child.conn.send([CLOSE, ''])
+            child.conn.send([pfe.CLOSE, ''])
             child.close()
         except IOError:
             pass
@@ -142,7 +145,7 @@ class Manager(object):
         if fd in self._children:
             del self._children[fd]
         if background:
-            t = Thread(target=os.waitpid, args=(child.pid, 0))
+            t = threading.Thread(target=os.waitpid, args=(child.pid, 0))
             t.daemon = True
             t.start()
         else:
@@ -151,8 +154,8 @@ class Manager(object):
     def _handle_child_event(self, child):
         event, msg = child.conn.recv()
         event = int(event)
-        if event & EXITING:
-            if event == EXITING_ERROR:
+        if event & pfe.EXITING:
+            if event == pfe.EXITING_ERROR:
                 self.log('Child %d exited due to error: %s' % (child.pid, msg))
             fd = child.conn.fileno()
             self._poll.unregister(fd)
@@ -172,7 +175,7 @@ class Manager(object):
         children = self._children.values()
         num_children = len(children)
         for ch in children:
-            if ch.curState & BUSY:
+            if ch.curState & pfe.BUSY:
                 total_busy += 1
         spares = num_children - total_busy
         if spares < self.min_spares:
@@ -205,11 +208,11 @@ class Manager(object):
         Bind the socket
         """
         address = (self.bind_ip, self.port)
-        protocol = SOCK_STREAM
+        protocol = socket.SOCK_STREAM
         if self.protocol == 'udp':
-            protocol = SOCK_DGRAM
-        self.server_socket = socket(AF_INET, protocol)
-        self.server_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+            protocol = socket.SOCK_DGRAM
+        self.server_socket = socket.socket(socket.AF_INET, protocol)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.settimeout(0.01)
         self.server_socket.bind(address)
         if self.protocol == 'tcp':
@@ -217,9 +220,9 @@ class Manager(object):
 
     def _signal_setup(self):
         # Set the signal handlers
-        signal(SIGHUP, self.hup_handler)
-        signal(SIGINT, self.int_handler)
-        signal(SIGTERM, self.term_handler)
+        signal.signal(signal.SIGHUP, self.hup_handler)
+        signal.signal(signal.SIGINT, self.int_handler)
+        signal.signal(signal.SIGTERM, self.term_handler)
 
     def _loop(self):
         while True:
