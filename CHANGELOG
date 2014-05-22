@@ -1,4 +1,10 @@
 -------------
+Version 0.1.5
+-------------
+
+* Changed the socket bind hooks to be called during __init__
+
+-------------
 Version 0.1.1
 -------------
 
