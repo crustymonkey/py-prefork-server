@@ -8,6 +8,7 @@ python server by just implementing hooks in a subclass.
 ## WARNING ##
 The 0.1.x and 0.2.x releases are *NOT* compatible!  0.2.x is mostly PEP 8
 compliant while 0.1.x is not.  Beyond that, they are functionally equivalent.
+It should be noted that the 0.1.x will no longer be supported moving forward.
 
 ## INSTALL ##
 
