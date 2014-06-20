@@ -214,7 +214,7 @@ def main():
     This is the same info that is available via a
     "pydoc preforkserver.Manager"
     """
-    manager = MyManager(TestChild, child_kw_args={'my_var': 'value'})
+    manager = MyManager(TestChild, child_kwargs={'my_var': 'value'})
     manager.run()
 
 
