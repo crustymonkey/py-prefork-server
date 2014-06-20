@@ -9,6 +9,7 @@
 import preforkserver as pfs
 import os
 
+
 class TestChild(pfs.BaseChild):
     """
     You have a number of instance variables in the clas that you have access
@@ -23,13 +24,14 @@ class TestChild(pfs.BaseChild):
                         this child has been set to be closed
     self.error =>       A string error message, if set
     """
-    def initialize(self):
+
+    def initialize(self, **kwargs):
         """
         Rather than reimplementing __init__, which you can do instead, you
         can just override this and setup and variables and such that you need
         to set up.  This is the recommended approach.
         """
-        self.myInstanceVar = 'value'
+        self.myInstanceVar = kwargs.get('my_var', None)
         self.blacklist = set(['10.0.0.1'])
 
     def post_accept(self):
@@ -38,7 +40,7 @@ class TestChild(pfs.BaseChild):
         connection has been established.  You can make any modifications/setup
         before "processRequest" is called.
         """
-        self.ip , self.port = self.address
+        self.ip, self.port = self.address
 
     def allow_deny(self):
         """
@@ -79,7 +81,7 @@ class TestChild(pfs.BaseChild):
         This is called after the connection is closed.  You can perform any
         maintenance/cleanup or post connection processing here.
         """
-        print 'Connection is closed, bye %s:%s' % (self.ip , self.port)
+        print 'Connection is closed, bye %s:%s' % (self.ip, self.port)
 
     def shutdown(self):
         """
@@ -92,6 +94,7 @@ class TestChild(pfs.BaseChild):
         files or a database connection.
         """
         print 'Shutting down child %d' % os.getpid()
+
 
 #
 # Now, if you have no special setup needs for your Manager, you can just
@@ -160,14 +163,14 @@ class MyManager(pfs.Manager):
     # I will just show you what the default implementation looks like
     # here.  If you do override intHandler or termHandler, make sure you
     # call the super() method
-    def hup_handler(self , frame , num):
+    def hup_handler(self, frame, num):
         """
         This handles a SIGHUP.  If you have a config for your server, you
         could reload that here.  By default, this just ignores the signal.
         """
         return
 
-    def int_handler(self , frame , num):
+    def int_handler(self, frame, num):
         """
         This handles a SIGINT.  The default is set an internal "stop" event
         to gracefully shutdown.  If you override this, call the super() so
@@ -175,11 +178,12 @@ class MyManager(pfs.Manager):
         """
         self._stop.set()
 
-    def term_handler(self , frame , num):
+    def term_handler(self, frame, num):
         """
         This handles a SIGTERM.  This does the same thing as intHandler()
         """
         self._stop.set()
+
 
 def main():
     """
@@ -210,8 +214,9 @@ def main():
     This is the same info that is available via a
     "pydoc preforkserver.Manager"
     """
-    manager = MyManager(TestChild)
+    manager = MyManager(TestChild, child_kw_args={'my_var': 'value'})
     manager.run()
+
 
 if __name__ == '__main__':
     main()

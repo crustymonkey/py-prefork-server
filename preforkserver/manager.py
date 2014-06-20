@@ -52,9 +52,8 @@ class Manager(object):
     """
     validProtocols = ('udp', 'tcp')
 
-    def __init__(self, child_class, max_servers=20, min_servers=5,
-                 min_spare_servers=2, max_spare_servers=10, max_requests=0,
-                 bind_ip='127.0.0.1', port=10000, protocol='tcp', listen=5):
+    def __init__(self, child_class, child_kw_args=None, max_servers=20, min_servers=5, min_spare_servers=2,
+                 max_spare_servers=10, max_requests=0, bind_ip='127.0.0.1', port=10000, protocol='tcp', listen=5):
         """
         child_class<BaseChild>       : An implentation of BaseChild to define
                                       the child processes
@@ -70,7 +69,10 @@ class Manager(object):
         protocol<str>                  : The protocol to use (tcp or udp)
         listen<int>                  : Listen backlog
         """
+        if not child_kw_args:
+            child_kw_args = {}
         self._ChildClass = child_class
+        self._child_kw_args = child_kw_args
         self.max_servers = int(max_servers)
         self.min_servers = int(min_servers)
         if self.min_servers > self.max_servers:
@@ -87,8 +89,8 @@ class Manager(object):
         self.port = int(port)
         self.protocol = protocol.lower()
         if protocol not in self.validProtocols:
-            raise ManagerError('Invalid protocol %s, must be in: %r' % 
-                (protocol, self.validProtocols))
+            raise ManagerError('Invalid protocol %s, must be in: %r' %
+                               (protocol, self.validProtocols))
         self.listen = int(listen)
         self.server_socket = None
         self._stop = threading.Event()
@@ -117,13 +119,13 @@ class Manager(object):
         self._poll.register(parent_pipe.fileno(), self._pollMask)
         pid = os.fork()
         if not pid:
-            ch = self._ChildClass(self.server_socket, self.max_requests, 
-                child_pipe, self.protocol)
+            ch = self._ChildClass(self.server_socket, self.max_requests,
+                                  child_pipe, self.protocol, **self._child_kw_args)
             parent_pipe.close()
             ch.run()
         else:
-            self._children[parent_pipe.fileno()] = ManagerChild(pid, 
-                parent_pipe)
+            self._children[parent_pipe.fileno()] = ManagerChild(pid,
+                                                                parent_pipe)
             child_pipe.close()
             return
 
@@ -190,8 +192,8 @@ class Manager(object):
             # We have too many spares and need to kill some
             to_kill = spares - self.max_spares
             children = sorted(children,
-                cmp=lambda x, y: cmp(x.totalProcessed, y.totalProcessed),
-                reverse=True)
+                              cmp=lambda x, y: cmp(x.totalProcessed, y.totalProcessed),
+                              reverse=True)
             # Send closes
             for ch in children[:to_kill]:
                 self._kill_child(ch)
