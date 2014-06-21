@@ -52,8 +52,9 @@ class Manager(object):
     """
     validProtocols = ('udp', 'tcp')
 
-    def __init__(self, child_class, child_kwargs=None, max_servers=20, min_servers=5, min_spare_servers=2,
-                 max_spare_servers=10, max_requests=0, bind_ip='127.0.0.1', port=10000, protocol='tcp', listen=5):
+    def __init__(self, child_class, child_args=None, child_kwargs=None, max_servers=20, min_servers=5,
+                 min_spare_servers=2, max_spare_servers=10, max_requests=0, bind_ip='127.0.0.1', port=10000,
+                 protocol='tcp', listen=5):
         """
         child_class<BaseChild>       : An implentation of BaseChild to define
                                       the child processes
@@ -69,9 +70,12 @@ class Manager(object):
         protocol<str>                  : The protocol to use (tcp or udp)
         listen<int>                  : Listen backlog
         """
+        if not child_args:
+            child_args = []
         if not child_kwargs:
             child_kwargs = {}
         self._ChildClass = child_class
+        self._child_args = child_args
         self._child_kwargs = child_kwargs
         self.max_servers = int(max_servers)
         self.min_servers = int(min_servers)
@@ -120,7 +124,7 @@ class Manager(object):
         pid = os.fork()
         if not pid:
             ch = self._ChildClass(self.server_socket, self.max_requests,
-                                  child_pipe, self.protocol, **self._child_kwargs)
+                                  child_pipe, self.protocol, *self._child_args, **self._child_kwargs)
             parent_pipe.close()
             ch.run()
         else:

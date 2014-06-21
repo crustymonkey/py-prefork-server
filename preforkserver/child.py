@@ -33,7 +33,7 @@ class BaseChild(object):
     be overriden for use within the Manager
     """
 
-    def __init__(self, server_socket, max_requests, child_conn, protocol, **kwargs):
+    def __init__(self, server_socket, max_requests, child_conn, protocol, *args, **kwargs):
         """
         Initialize the passed in child info and call the initialize() hook
         """
@@ -52,7 +52,7 @@ class BaseChild(object):
         self.address = None
         self.closed = False
         self.error = None
-        self.initialize(**kwargs)
+        self.initialize(*args, **kwargs)
 
     def _close_conn(self):
         if self.conn and isinstance(self.conn, socket.SocketType):
@@ -148,7 +148,7 @@ class BaseChild(object):
         self._loop()
 
     # Hooks to be overridden
-    def initialize(self, **kwargs):
+    def initialize(self, *args, **kwargs):
         """
         This is called at the end of __init__().  Any additional initialization
         should be done here

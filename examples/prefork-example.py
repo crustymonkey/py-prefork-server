@@ -25,14 +25,14 @@ class TestChild(pfs.BaseChild):
     self.error =>       A string error message, if set
     """
 
-    def initialize(self, **kwargs):
+    def initialize(self, *args, **kwargs):
         """
         Rather than reimplementing __init__, which you can do instead, you
         can just override this and setup and variables and such that you need
         to set up.  This is the recommended approach.
         """
         self.myInstanceVar = kwargs.get('my_var', None)
-        self.blacklist = set(['10.0.0.1'])
+        self.blacklist = {'10.0.0.1'}
 
     def post_accept(self):
         """
