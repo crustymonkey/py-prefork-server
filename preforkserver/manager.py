@@ -52,12 +52,17 @@ class Manager(object):
     """
     validProtocols = ('udp', 'tcp')
 
-    def __init__(self, child_class, child_args=None, child_kwargs=None, max_servers=20, min_servers=5,
-                 min_spare_servers=2, max_spare_servers=10, max_requests=0, bind_ip='127.0.0.1', port=10000,
-                 protocol='tcp', listen=5):
+    def __init__(self, child_class, child_args=None, child_kwargs=None, 
+            max_servers=20, min_servers=5,
+            min_spare_servers=2, max_spare_servers=10, max_requests=0, 
+            bind_ip='127.0.0.1', port=10000, protocol='tcp', listen=5):
         """
         child_class<BaseChild>       : An implentation of BaseChild to define
-                                      the child processes
+                                       the child processes
+        child_args<list_type>        : The argument list to pass into the
+                                       child initialize() method
+        child_kwargs<list_type>      : The argument dict to pass into the
+                                       child initialize() method
         max_servers<int>             : Maximum number of children to have
         min_servers<int>             : Minimum number of children to have
         min_spare_servers<int>       : Minimum number of spare children to have
@@ -75,26 +80,31 @@ class Manager(object):
         if not child_kwargs:
             child_kwargs = {}
         self._ChildClass = child_class
+        # Check for proper typing of child args
+        if not isinstance(child_args, (tuple, list)):
+            raise TypeError('child_args must be a tuple or list type')
+        if not isinstance(child_kwargs , dict):
+            raise TypeError('child_kwargs must be a dict type')
         self._child_args = child_args
         self._child_kwargs = child_kwargs
         self.max_servers = int(max_servers)
         self.min_servers = int(min_servers)
         if self.min_servers > self.max_servers:
             raise ManagerError('You cannot have minServers '
-                               '(%d) be larger than maxServers (%d)!' %
-                               (min_servers, max_servers))
+                '(%d) be larger than maxServers (%d)!' %
+                (min_servers, max_servers))
         self.min_spares = int(min_spare_servers)
         self.max_spares = int(max_spare_servers)
         if self.min_spares > self.max_spares:
             raise ManagerError('You cannot have minSpareServers be larger '
-                               'than maxSpareServers!')
+                'than maxSpareServers!')
         self.max_requests = int(max_requests)
         self.bind_ip = bind_ip
         self.port = int(port)
         self.protocol = protocol.lower()
         if protocol not in self.validProtocols:
             raise ManagerError('Invalid protocol %s, must be in: %r' %
-                               (protocol, self.validProtocols))
+                (protocol, self.validProtocols))
         self.listen = int(listen)
         self.server_socket = None
         self._stop = threading.Event()
@@ -124,7 +134,8 @@ class Manager(object):
         pid = os.fork()
         if not pid:
             ch = self._ChildClass(self.server_socket, self.max_requests,
-                                  child_pipe, self.protocol, *self._child_args, **self._child_kwargs)
+                child_pipe, self.protocol, *self._child_args, 
+                **self._child_kwargs)
             parent_pipe.close()
             ch.run()
         else:
@@ -196,8 +207,8 @@ class Manager(object):
             # We have too many spares and need to kill some
             to_kill = spares - self.max_spares
             children = sorted(children,
-                              cmp=lambda x, y: cmp(x.totalProcessed, y.totalProcessed),
-                              reverse=True)
+                cmp=lambda x, y: cmp(x.totalProcessed, y.totalProcessed),
+                reverse=True)
             # Send closes
             for ch in children[:to_kill]:
                 self._kill_child(ch)

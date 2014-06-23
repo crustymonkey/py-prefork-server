@@ -33,7 +33,8 @@ class BaseChild(object):
     be overriden for use within the Manager
     """
 
-    def __init__(self, server_socket, max_requests, child_conn, protocol, *args, **kwargs):
+    def __init__(self, server_socket, max_requests, child_conn, protocol, 
+            *args, **kwargs):
         """
         Initialize the passed in child info and call the initialize() hook
         """
