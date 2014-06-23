@@ -1,14 +1,20 @@
 -------------
+Version 0.2.1
+-------------
+
+* Added *args and **kwargs options for child class initialization (cosminbasca)
+
+-------------
 Version 0.2.0
 -------------
 
-* Changed the entire API for PEP 8 compliance (mostly)
+* Changed the entire API for PEP 8 compliance (mostly) (cosminbasca)
 
 -------------
 Version 0.1.5
 -------------
 
-* Changed the socket bind hooks to be called during __init__
+* Changed the socket bind hooks to be called during __init__ (cosminbasca)
 
 -------------
 Version 0.1.1
