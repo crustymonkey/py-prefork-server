@@ -33,11 +33,24 @@ class BaseChild(object):
     be overriden for use within the Manager
     """
 
-    def __init__(self, server_socket, max_requests, child_conn, protocol, 
-            *args, **kwargs):
+    def __init__(self , max_requests , child_conn , protocol , 
+            server_socket=None , manager=None , args , kwargs):
         """
         Initialize the passed in child info and call the initialize() hook
         """
+        # Add handling here for SO_REUSEPORT.  server_socket will be None
+        # if we can reuse port
+        if not server_socket:
+            if not hasattr(socket , 'SO_REUSEPORT'):
+                self._error('server socket is None and SO_REUSEPORT is not '
+                    'available.  Cannot start child process')
+                os._exit(1)
+            elif not manager:
+                self._error('server socket is not set, and neither is the '
+                    'manager object.  One must be set.  Cannot start child '
+                    'process')
+                os._exit(1)
+            server_socket = self._get_server_socket(manager)
         self._server_socket = server_socket
         self._max_requests = max_requests
         self._child_conn = child_conn
@@ -54,6 +67,23 @@ class BaseChild(object):
         self.closed = False
         self.error = None
         self.initialize(*args, **kwargs)
+
+    def _get_server_socket(self , manager):
+        """
+        Binds the server socket using SO_REUSEPORT and returns it
+        """
+        addr = (manager.bind_ip , manager.port)
+        protocol = socket.SOCK_STREAM
+        if manager.protocol == 'udp':
+            protocol = socket.SOCK_DGRAM
+        s = socket.socket(socket.AF_INET , protocol)
+        s.setsockopt(socket.SOL_SOCKET , socket.SO_REUSEPORT , 1)
+        s.settimeout(0.01)
+        s.bind(addr)
+        if protocol == socket.SOCK_STREAM:
+            s.listen(manager.listen)
+        del manager
+        return s
 
     def _close_conn(self):
         if self.conn and isinstance(self.conn, socket.SocketType):

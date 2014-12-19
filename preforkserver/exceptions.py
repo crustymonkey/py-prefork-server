@@ -20,3 +20,6 @@
 
 class ManagerError(Exception):
     pass
+
+class ChildError(Exception):
+    pass

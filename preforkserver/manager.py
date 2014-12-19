@@ -22,6 +22,7 @@ from preforkserver.exceptions import ManagerError
 import preforkserver.events as pfe
 import multiprocessing as mp
 import threading
+import weakref
 import select
 import signal
 import select
@@ -55,7 +56,8 @@ class Manager(object):
     def __init__(self, child_class, child_args=None, child_kwargs=None, 
             max_servers=20, min_servers=5,
             min_spare_servers=2, max_spare_servers=10, max_requests=0, 
-            bind_ip='127.0.0.1', port=10000, protocol='tcp', listen=5):
+            bind_ip='127.0.0.1', port=10000, protocol='tcp', listen=5 ,
+            reuse_port=False):
         """
         child_class<BaseChild>       : An implentation of BaseChild to define
                                        the child processes
@@ -74,6 +76,13 @@ class Manager(object):
         port<int>                    : The port that the server should listen on
         protocol<str>                  : The protocol to use (tcp or udp)
         listen<int>                  : Listen backlog
+        reuse_port<bool>             : This will use SO_REUSEPORT and create
+                                       the listen sock in each child rather
+                                       than in the parent process.  
+                                       SO_REUSEPORT will result in a much more
+                                       balanced distribution of connections
+                                       and it is highly recommended that
+                                       you turn this on if available
         """
         if not child_args:
             child_args = []
@@ -106,6 +115,7 @@ class Manager(object):
             raise ManagerError('Invalid protocol %s, must be in: %r' %
                 (protocol, self.validProtocols))
         self.listen = int(listen)
+        self.reuse_port = reuse_port and hasattr(socket , 'SO_REUSEPORT')
         self.server_socket = None
         self._stop = threading.Event()
         self._children = {}
@@ -123,7 +133,10 @@ class Manager(object):
         """
         returns the newly bound server address as an (ip, port) tuple
         """
-        return self.server_socket.getsockname()
+        ret = None 
+        if self.server_socket is not None:
+            ret = self.server_socket.getsockname()
+        return ret
 
     def _start_child(self):
         """
@@ -133,9 +146,10 @@ class Manager(object):
         self._poll.register(parent_pipe.fileno(), self._pollMask)
         pid = os.fork()
         if not pid:
-            ch = self._ChildClass(self.server_socket, self.max_requests,
-                child_pipe, self.protocol, *self._child_args, 
-                **self._child_kwargs)
+            manager = weakref.proxy(self) if self.reuse_port else None
+            ch = self._ChildClass(self.max_requests , child_pipe , 
+                self.protocol , self.server_socket , manager ,
+                self.self._child_args , self._child_kwargs)
             parent_pipe.close()
             ch.run()
         else:
@@ -224,6 +238,9 @@ class Manager(object):
         """
         Bind the socket
         """
+        if self.reuse_port:
+            # The socket will be created in the child processes
+            return
         address = (self.bind_ip, self.port)
         protocol = socket.SOCK_STREAM
         if self.protocol == 'udp':
@@ -273,7 +290,8 @@ class Manager(object):
         # First loop through and tell the children to close
         for child in children:
             self._kill_child(child, False)
-        self.server_socket.close()
+        if self.server_socket:
+            self.server_socket.close()
         self.log('Server shutdown completed')
 
     def run(self):
