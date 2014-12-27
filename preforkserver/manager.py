@@ -124,9 +124,10 @@ class Manager(object):
 
         # Bind the socket now so that it can be used before run is called
         # Addresses: https://github.com/crustymonkey/py-prefork-server/pull/3
-        self.pre_bind()
-        self._bind()
-        self.post_bind()
+        if not self.reuse_port:
+            self.pre_bind()
+            self._bind()
+            self.post_bind()
 
     @property
     def bound_address(self):
@@ -144,12 +145,12 @@ class Manager(object):
         """
         parent_pipe, child_pipe = mp.Pipe()
         self._poll.register(parent_pipe.fileno(), self._pollMask)
+        manager = weakref.proxy(self) if self.reuse_port else None
         pid = os.fork()
         if not pid:
-            manager = weakref.proxy(self) if self.reuse_port else None
             ch = self._ChildClass(self.max_requests , child_pipe , 
                 self.protocol , self.server_socket , manager ,
-                self.self._child_args , self._child_kwargs)
+                self._child_args , self._child_kwargs)
             parent_pipe.close()
             ch.run()
         else:
@@ -206,7 +207,7 @@ class Manager(object):
         children = self._children.values()
         num_children = len(children)
         for ch in children:
-            if ch.curState & pfe.BUSY:
+            if ch.current_state & pfe.BUSY:
                 total_busy += 1
         spares = num_children - total_busy
         if spares < self.min_spares:
@@ -318,6 +319,9 @@ class Manager(object):
         This hook is called before the main socket is created and bound
         to the ip:port.  This is similar to the initialize() hook in the
         child class.  You can use this to set up global variables, etc.
+
+        Note that this will NOT be called if reuse_port is set.  Instead,
+        this call be overridden in the child, where the bind will occur
         """
         return
 
@@ -325,6 +329,9 @@ class Manager(object):
         """
         As you might have guessed, this is called right after the accept()
         socket has been created and bound.
+
+        Note that this will NOT be called if reuse_port is set.  Instead,
+        this call be overridden in the child, where the bind will occur
         """
         return
 

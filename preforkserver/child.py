@@ -33,8 +33,8 @@ class BaseChild(object):
     be overriden for use within the Manager
     """
 
-    def __init__(self , max_requests , child_conn , protocol , 
-            server_socket=None , manager=None , args , kwargs):
+    def __init__(self , max_requests , child_conn , protocol ,
+            server_socket=None , manager=None , args=None , kwargs=None):
         """
         Initialize the passed in child info and call the initialize() hook
         """
@@ -50,7 +50,9 @@ class BaseChild(object):
                     'manager object.  One must be set.  Cannot start child '
                     'process')
                 os._exit(1)
+            self.pre_bind()
             server_socket = self._get_server_socket(manager)
+            self.post_bind()
         self._server_socket = server_socket
         self._max_requests = max_requests
         self._child_conn = child_conn
@@ -66,7 +68,16 @@ class BaseChild(object):
         self.address = None
         self.closed = False
         self.error = None
+        args = args if args else []
+        kwargs = kwargs if kwargs else {}
         self.initialize(*args, **kwargs)
+
+    @property
+    def bound_address(self):
+        """
+        Returns the bound server address as (ip , port) tuple
+        """
+        return self.server_socket.getsockname()
 
     def _get_server_socket(self , manager):
         """
@@ -179,6 +190,20 @@ class BaseChild(object):
         self._loop()
 
     # Hooks to be overridden
+    def pre_bind(self):
+        """
+        This is just like the hook in the manager class.  It is called just
+        before the socket is bound in the child (if reuse_port is set)
+        """
+        return
+
+    def post_bind(self):
+        """
+        This, like the manager version, is called just after the socket is
+        bound, if reuse_port is set
+        """
+        return
+
     def initialize(self, *args, **kwargs):
         """
         This is called at the end of __init__().  Any additional initialization
