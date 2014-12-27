@@ -1,4 +1,11 @@
 -------------
+Version 0.3.0
+-------------
+
+* Fixed curState naming bug (thanks cosminbasca!)
+* Added support for SO_REUSEPORT
+
+-------------
 Version 0.2.1
 -------------
 
