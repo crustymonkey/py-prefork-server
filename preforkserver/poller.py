@@ -27,7 +27,7 @@
 # for the purposes of this library
 #
 
-from .exceptions import EventMaskError
+from preforserver.exceptions import EventMaskError
 import select
 import sys
 
