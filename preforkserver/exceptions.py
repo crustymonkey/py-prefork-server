@@ -23,3 +23,6 @@ class ManagerError(Exception):
 
 class ChildError(Exception):
     pass
+
+class EventMaskError(Exception):
+    pass
