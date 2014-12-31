@@ -19,8 +19,8 @@
 #
 
 import preforkserver.events as pfe
+from preforkserver.poller import get_poller
 from time import sleep
-import select
 import socket
 import os
 
@@ -56,10 +56,9 @@ class BaseChild(object):
         self._server_socket = server_socket
         self._max_requests = max_requests
         self._child_conn = child_conn
-        self._poll = select.poll()
-        self._poll_mask = select.POLLIN | select.POLLPRI
-        self._poll.register(self._server_socket.fileno(), self._poll_mask)
-        self._poll.register(self._child_conn.fileno(), self._poll_mask)
+        self._poll = get_poller(select.POLLIN | select.POLLPRI)
+        self._poll.register(self._server_socket)
+        self._poll.register(self._child_conn)
         self.protocol = protocol
         self.requests_handled = 0
         # The "conn" will be a socket connection object if this is a tcp 
@@ -178,8 +177,8 @@ class BaseChild(object):
                 self._shutdown()
 
     def _shutdown(self, status=0):
-        self._poll.unregister(self._child_conn.fileno())
-        self._poll.unregister(self._server_socket.fileno())
+        self._poll.unregister(self._child_conn)
+        self._poll.unregister(self._server_socket)
         self._child_conn.close()
         self._server_socket.close()
         self.shutdown()

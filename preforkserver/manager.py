@@ -19,13 +19,12 @@
 #
 
 from preforkserver.exceptions import ManagerError
+from preforkserver.poller import get_poller
 import preforkserver.events as pfe
 import multiprocessing as mp
 import threading
 import weakref
-import select
 import signal
-import select
 import socket
 import os
 
@@ -119,8 +118,7 @@ class Manager(object):
         self.server_socket = None
         self._stop = threading.Event()
         self._children = {}
-        self._poll = select.poll()
-        self._pollMask = select.POLLIN | select.POLLPRI
+        self._poll = get_poller(select.POLLIN | select.POLLPRI)
 
         # Bind the socket now so that it can be used before run is called
         # Addresses: https://github.com/crustymonkey/py-prefork-server/pull/3
@@ -144,7 +142,7 @@ class Manager(object):
         Fork off a child and set up communication pipes
         """
         parent_pipe, child_pipe = mp.Pipe()
-        self._poll.register(parent_pipe.fileno(), self._pollMask)
+        self._poll.register(parent_pipe)
         manager = weakref.proxy(self) if self.reuse_port else None
         pid = os.fork()
         if not pid:
@@ -171,7 +169,7 @@ class Manager(object):
         except IOError:
             pass
         try:
-            self._poll.unregister(fd)
+            self._poll.unregister(child.conn)
         except:
             pass
         if fd in self._children:
@@ -190,7 +188,7 @@ class Manager(object):
             if event == pfe.EXITING_ERROR:
                 self.log('Child %d exited due to error: %s' % (child.pid, msg))
             fd = child.conn.fileno()
-            self._poll.unregister(fd)
+            self._poll.unregister(child.conn)
             del self._children[fd]
             child.close()
             os.waitpid(child.pid, 0)
@@ -270,17 +268,18 @@ class Manager(object):
                 # When a signal is received, it can interrupt the system call
                 # and break things with an improper exit
                 pass
-            for fd, e in events:
+            for sock, e in events:
+                fd = sock.fileno()
                 if fd in self._children:
                     ch = self._children[fd]
                     self._handle_child_event(ch)
                 else:
                     try:
-                        self._poll.unregister(fd)
+                        self._poll.unregister(sock)
                     except Exception, e:
                         self.log('Error unregistering %d: %s; %s' % (fd, e))
                     try:
-                        os.close(fd)
+                        sock.close()
                     except Exception, e:
                         self.log('Error closing child pipe: %s' % e)
             self._assess_state()
