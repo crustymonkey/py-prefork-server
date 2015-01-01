@@ -33,9 +33,11 @@ import sys
 
 # This is a hack to make this work on systems where POLLIN and 
 # POLLPRI (OS X, apparently...) are not defined in the select module
-if not hasattr(select , 'POLLIN') or not hasattr(select , 'POLLPRI'):
+if not hasattr(select , 'POLLIN') or not hasattr(select , 'POLLPRI') or not \
+        hasattr(select , 'POLLOUT'):
     setattr(select , 'POLLIN' , 1)
     setattr(select , 'POLLPRI' , 2)
+    setattr(select , 'POLLOUT' , 4)
 
 def get_poller(def_ev_mask=None):
     """
