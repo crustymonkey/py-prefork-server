@@ -22,6 +22,7 @@ import preforkserver.events as pfe
 from preforkserver.poller import get_poller
 from time import sleep
 import socket
+import select
 import os
 
 __all__ = ['BaseChild']
@@ -116,7 +117,11 @@ class BaseChild(object):
         """
         Handle an event sent from the parent
         """
-        event, msg = self._child_conn.recv()
+        try:
+            event, msg = self._child_conn.recv()
+        except EOFError:
+            self.closed = True
+            return
         event = int(event)
         if event & pfe.CLOSE:
             self.closed = True
@@ -156,19 +161,21 @@ class BaseChild(object):
         while True:
             events = []
             try:
-                events = self._poll.poll()
-            except select.error, e:
+                events = self._poll.poll(max_events=20)
+            except IOError as e:
+                pass
+            except select.error as e:
                 # This happens when the system call is interrupted
                 pass
-            for fd, e in events:
-                if fd == self._server_socket.fileno():
+            for sock , e in events:
+                if sock == self._server_socket:
                     try:
                         self._handle_connection()
                     except Exception, e:
                         self._error(e)
                         self._shutdown(1)
                     self.requests_handled += 1
-                elif fd == self._child_conn.fileno():
+                elif sock == self._child_conn:
                     self._handle_parent_event()
             if self.closed:
                 self._shutdown()

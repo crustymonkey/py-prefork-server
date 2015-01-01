@@ -27,7 +27,7 @@
 # for the purposes of this library
 #
 
-from preforserver.exceptions import EventMaskError
+from preforkserver.exceptions import EventMaskError
 import select
 import sys
 
@@ -121,7 +121,7 @@ class Poll(BasePoller):
 
     def unregister(self , sock):
         self._poll.unregister(sock)
-        del self._sock_map(sock.fileno())
+        del self._sock_map[sock.fileno()]
 
     def modify(self , sock , event_mask):
         self._poll.modify(sock , event_mask)
@@ -143,14 +143,14 @@ class Poll(BasePoller):
 class Epoll(Poll):
 
     def __init__(self , def_ev_mask=None , sizehint=-1):
-        super(Epoll).__init__(def_ev_mask)
+        BasePoller.__init__(self , def_ev_mask)
         self._poll = select.epoll(sizehint)
 
     def poll(self , timeout=-1 , max_events=-1):
         ret = []
-        for fd , ev in self._poll(timeout=timeout , maxevents=max_events):
+        for fd , ev in self._poll.poll(timeout=timeout , maxevents=max_events):
             ret.append( (self._sock_map[fd] , ev) )
-        self._poll(timeout=timeout , maxevents=max_events)
+        return ret
 
     def close(self):
         self._poll.close()

@@ -22,6 +22,7 @@ from preforkserver.exceptions import ManagerError
 from preforkserver.poller import get_poller
 import preforkserver.events as pfe
 import multiprocessing as mp
+import select
 import threading
 import weakref
 import signal
@@ -263,7 +264,9 @@ class Manager(object):
             if self._stop.isSet():
                 break
             try:
-                events = self._poll.poll(1)
+                events = self._poll.poll(1 , 10)
+            except IOError:
+                pass
             except select.error:
                 # When a signal is received, it can interrupt the system call
                 # and break things with an improper exit
