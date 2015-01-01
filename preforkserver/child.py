@@ -89,7 +89,6 @@ class BaseChild(object):
             protocol = socket.SOCK_DGRAM
         s = socket.socket(socket.AF_INET , protocol)
         s.setsockopt(socket.SOL_SOCKET , socket.SO_REUSEPORT , 1)
-        s.settimeout(0.01)
         s.bind(addr)
         if protocol == socket.SOCK_STREAM:
             s.listen(manager.listen)
@@ -162,9 +161,11 @@ class BaseChild(object):
             events = []
             try:
                 events = self._poll.poll(max_events=20)
-            except IOError as e:
+            except OSError:
                 pass
-            except select.error as e:
+            except IOError:
+                pass
+            except select.error:
                 # This happens when the system call is interrupted
                 pass
             for sock , e in events:

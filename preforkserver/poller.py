@@ -108,7 +108,7 @@ class BasePoller(object):
 class Poll(BasePoller):
 
     def __init__(self , def_ev_mask=None):
-        super(Poll).__init__(def_ev_mask)
+        BasePoller.__init__(self , def_ev_mask)
         self._poll = select.poll()
 
     def register(self , sock , event_mask=None):
@@ -146,7 +146,7 @@ class Epoll(Poll):
         BasePoller.__init__(self , def_ev_mask)
         self._poll = select.epoll(sizehint)
 
-    def poll(self , timeout=-1 , max_events=-1):
+    def poll(self , timeout=-1 , max_events=1):
         ret = []
         for fd , ev in self._poll.poll(timeout=timeout , maxevents=max_events):
             ret.append( (self._sock_map[fd] , ev) )
@@ -163,7 +163,7 @@ class Select(BasePoller):
     """
 
     def __init__(self , def_ev_mask=None):
-        super(Select).__init__(def_ev_mask)
+        BasePoller.__init__(self , def_ev_mask)
         self._poll = None
         self._rlist = set()
         self._wlist = set()
@@ -218,7 +218,7 @@ class Kqueue(BasePoller):
     """
 
     def __init__(self , def_ev_mask=None):
-        super(Select).__init__(def_ev_mask)
+        BasePoller.__init__(self , def_ev_mask)
         self._kev_table = {}
         # We are only going to support a tiny subset of the kevent filters
         # that are available.  This will map standard polling events to

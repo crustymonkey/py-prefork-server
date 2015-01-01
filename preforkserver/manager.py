@@ -247,7 +247,6 @@ class Manager(object):
             protocol = socket.SOCK_DGRAM
         self.server_socket = socket.socket(socket.AF_INET, protocol)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server_socket.settimeout(0.01)
         self.server_socket.bind(address)
         if self.protocol == 'tcp':
             self.server_socket.listen(self.listen)
@@ -265,6 +264,8 @@ class Manager(object):
                 break
             try:
                 events = self._poll.poll(1 , 10)
+            except OSError:
+                pass
             except IOError:
                 pass
             except select.error:
