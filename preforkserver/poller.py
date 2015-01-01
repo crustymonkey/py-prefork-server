@@ -38,6 +38,7 @@ if not hasattr(select , 'POLLIN') or not hasattr(select , 'POLLPRI') or not \
     setattr(select , 'POLLIN' , 1)
     setattr(select , 'POLLPRI' , 2)
     setattr(select , 'POLLOUT' , 4)
+    setattr(select , 'POLLERR' , 8)
 
 def get_poller(def_ev_mask=None):
     """
