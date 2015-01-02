@@ -32,7 +32,7 @@ class TestChild(pfs.BaseChild):
         to set up.  This is the recommended approach.
         """
         self.myInstanceVar = kwargs.get('my_var', None)
-        self.blacklist = {'10.0.0.1'}
+        self.blacklist = set('10.0.0.1')
 
     def post_accept(self):
         """
@@ -68,12 +68,15 @@ class TestChild(pfs.BaseChild):
         
         Remember, if this is a udp server, self.conn will be a string with 
         the actual packet payload.  If you have a udp server, and you wish
-        to respond, you can create a new udp connection back to the sender.
+        to respond, you can use the resp_to() method to do so
         """
         self.conn.sendall('220 Go Ahead\r\n')
         fromClient = self.conn.recv(4096)
         self.conn.sendall('Thank you for your info\r\n')
         print fromClient
+        # For UDP connections, you would do something like this
+        # data = self.conn
+        # self.resp_to('Got data: %s\r\n' % data.strip())
         # When this function exits, the connection is automatically closed
 
     def post_process_request(self):
@@ -191,25 +194,27 @@ def main():
     is init MyManager and call its run() method.  The signature for 
     the base Manager __init__ looks like this:
 
-        def __init__(self , childClass , maxServers=20 , minServers=5 ,
-            minSpareServers=2 , maxSpareServers=10 , maxRequests=0 ,
-            bindIp='127.0.0.1' , port=10000 , proto='tcp' , listen=5):
+        def __init__(self , child_class , max_servers=20 , min_servers=5 ,
+            min_spare_servers=2 , max_spare_servers=10 , max_requests=0 ,
+            bind_ip='127.0.0.1' , port=10000 , protocol='tcp' , listen=5 ,
+            reuse_port=False):
 
     The definition of those variables are:
 
-        childClass<BaseChild>       : An implentation of BaseChild to define
+        child_class<BaseChild>      : An implentation of BaseChild to define
                                       the child processes
-        maxServers<int>             : Maximum number of children to have
-        minServers<int>             : Minimum number of children to have
-        minSpareServers<int>        : Minimum number of spare children to have
-        maxSpareServers<int>        : Maximum number of spare children to have
-        maxRequests<int>            : Maximum number of requests each child
+        max_servers<int>            : Maximum number of children to have
+        min_servers<int>            : Minimum number of children to have
+        min_spare_servers<int>      : Minimum number of spare children to have
+        max_spare_servers<int>      : Maximum number of spare children to have
+        max_requests<int>           : Maximum number of requests each child
                                       should handle.  Zero is unlimited and
                                       default
-        bindIp<str>                 : The IP address to bind to
+        bind_ip<str>                : The IP address to bind to
         port<int>                   : The port that the server should listen on
-        proto<str>                  : The protocol to use (tcp or udp)
+        protocol<str>               : The protocol to use (tcp or udp)
         listen<int>                 : Listen backlog
+        reuse_port<bool>            : Use SO_REUSEPORT (if available)
 
     This is the same info that is available via a
     "pydoc preforkserver.Manager"
