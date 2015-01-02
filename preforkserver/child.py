@@ -196,6 +196,19 @@ class BaseChild(object):
     def run(self):
         self._loop()
 
+    def resp_to(self , msg):
+        """
+        This is a convenience function that will send the given msg string
+        to either the tcp client connection or to the current address in
+        the case of a UDP socket
+
+        msg:str         The message to respond to the client with
+        """
+        if self.protocol == 'tcp':
+            self.conn.sendall(msg)
+        else:
+            self._server_socket.sendto(msg , self.address)
+
     # Hooks to be overridden
     def pre_bind(self):
         """
