@@ -1,4 +1,16 @@
 -------------
+Version 0.4.0
+-------------
+
+* Abstracted the polling layer due to issues with select.poll on OS X
+  (https://github.com/crustymonkey/py-prefork-server/issues/8 thanks Abai)
+  The best poller for the system this is running on is now automatically
+  selected (epoll on modern linux, kqueue on BSD/OS X, etc.)
+* Updated documentation to reflect changes with PEP 8 compliance
+* Fixed a bug in the example code
+* Other minor fixes
+
+-------------
 Version 0.3.0
 -------------
 
