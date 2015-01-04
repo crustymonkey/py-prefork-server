@@ -233,7 +233,7 @@ class BaseChild(object):
 
     def post_accept(self):
         """
-        self.conn and self.addr are initialized here since a new connection
+        self.conn and self.address are initialized here since a new connection
         has been established.  You can make any modifications/setup needed 
         before handleRequest is called here.
         """
