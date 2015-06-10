@@ -221,7 +221,7 @@ class Manager(object):
             # We have too many spares and need to kill some
             to_kill = spares - self.max_spares
             children = sorted(children,
-                cmp=lambda x, y: cmp(x.totalProcessed, y.totalProcessed),
+                cmp=lambda x, y: cmp(x.total_processed, y.total_processed),
                 reverse=True)
             # Send closes
             for ch in children[:to_kill]:
