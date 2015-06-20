@@ -164,15 +164,18 @@ class Manager(object):
         completion in a thread.
         """
         fd = child.conn.fileno()
+
+        try:
+            self._poll.unregister(child.conn)
+        except:
+            pass
+
         try:
             child.conn.send([pfe.CLOSE, ''])
             child.close()
         except IOError:
             pass
-        try:
-            self._poll.unregister(child.conn)
-        except:
-            pass
+
         if fd in self._children:
             del self._children[fd]
         if background:
