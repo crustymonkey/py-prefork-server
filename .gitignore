@@ -2,6 +2,7 @@ test.py
 MANIFEST
 dist
 
+*.pyc
 .idea/*
 .DS_Store
 build/*
