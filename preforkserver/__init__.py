@@ -18,7 +18,7 @@
 #    along with py-prefork-server.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __version__ import *
-from child import *
-from manager import *
-from exceptions import *
+from .__version__ import *
+from .child import *
+from .manager import *
+from .exceptions import *

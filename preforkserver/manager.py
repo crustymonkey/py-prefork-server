@@ -88,25 +88,30 @@ class Manager(object):
             child_args = []
         if not child_kwargs:
             child_kwargs = {}
+
         self._ChildClass = child_class
         # Check for proper typing of child args
         if not isinstance(child_args, (tuple, list)):
             raise TypeError('child_args must be a tuple or list type')
         if not isinstance(child_kwargs , dict):
             raise TypeError('child_kwargs must be a dict type')
+
         self._child_args = child_args
         self._child_kwargs = child_kwargs
         self.max_servers = int(max_servers)
+
         self.min_servers = int(min_servers)
         if self.min_servers > self.max_servers:
             raise ManagerError('You cannot have minServers '
                 '(%d) be larger than maxServers (%d)!' %
                 (min_servers, max_servers))
+
         self.min_spares = int(min_spare_servers)
         self.max_spares = int(max_spare_servers)
         if self.min_spares > self.max_spares:
             raise ManagerError('You cannot have minSpareServers be larger '
                 'than maxSpareServers!')
+
         self.max_requests = int(max_requests)
         self.bind_ip = bind_ip
         self.port = int(port)
@@ -114,6 +119,7 @@ class Manager(object):
         if protocol not in self.validProtocols:
             raise ManagerError('Invalid protocol %s, must be in: %r' %
                 (protocol, self.validProtocols))
+
         self.listen = int(listen)
         self.reuse_port = reuse_port and hasattr(socket , 'SO_REUSEPORT')
         self.server_socket = None
@@ -146,6 +152,7 @@ class Manager(object):
         self._poll.register(parent_pipe)
         manager = weakref.proxy(self) if self.reuse_port else None
         pid = os.fork()
+
         if not pid:
             ch = self._ChildClass(self.max_requests , child_pipe , 
                 self.protocol , self.server_socket , manager ,
@@ -188,6 +195,7 @@ class Manager(object):
     def _handle_child_event(self, child):
         event, msg = child.conn.recv()
         event = int(event)
+
         if event & pfe.EXITING:
             if event == pfe.EXITING_ERROR:
                 self.log('Child %d exited due to error: %s' % (child.pid, msg))
@@ -206,11 +214,13 @@ class Manager(object):
         accordingly
         """
         total_busy = 0
-        children = self._children.values()
+        children = list(self._children.values())
         num_children = len(children)
+
         for ch in children:
             if ch.current_state & pfe.BUSY:
                 total_busy += 1
+
         spares = num_children - total_busy
         if spares < self.min_spares:
             # We need to fork more children
@@ -218,7 +228,7 @@ class Manager(object):
             to_fork = spares
             if diff2max - spares < 0:
                 to_fork = diff2max
-            for i in xrange(to_fork):
+            for i in range(to_fork):
                 self._start_child()
         elif spares > self.max_spares + self.min_servers:
             # We have too many spares and need to kill some
@@ -226,11 +236,13 @@ class Manager(object):
             children = sorted(children,
                 cmp=lambda x, y: cmp(x.total_processed, y.total_processed),
                 reverse=True)
+
             # Send closes
             for ch in children[:to_kill]:
                 self._kill_child(ch)
+
         if num_children < self.min_servers:
-            for i in xrange(self.min_servers - num_children):
+            for i in range(self.min_servers - num_children):
                 self._start_child()
 
     def _init_children(self):
@@ -248,6 +260,7 @@ class Manager(object):
         protocol = socket.SOCK_STREAM
         if self.protocol == 'udp':
             protocol = socket.SOCK_DGRAM
+
         self.server_socket = socket.socket(socket.AF_INET, protocol)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind(address)
@@ -275,6 +288,7 @@ class Manager(object):
                 # When a signal is received, it can interrupt the system call
                 # and break things with an improper exit
                 pass
+
             for sock, e in events:
                 fd = sock.fileno()
                 if fd in self._children:
@@ -283,22 +297,26 @@ class Manager(object):
                 else:
                     try:
                         self._poll.unregister(sock)
-                    except Exception, e:
+                    except Exception as e:
                         self.log('Error unregistering %d: %s; %s' % (fd, e))
                     try:
                         sock.close()
-                    except Exception, e:
+                    except Exception as e:
                         self.log('Error closing child pipe: %s' % e)
+
             self._assess_state()
 
     def _shutdown_server(self):
         self.log('Starting server shutdown')
-        children = self._children.values()
+        children = list(self._children.values())
+
         # First loop through and tell the children to close
         for child in children:
             self._kill_child(child, False)
+
         if self.server_socket:
             self.server_socket.close()
+
         self.log('Server shutdown completed')
 
     def run(self):

@@ -237,7 +237,7 @@ class Kqueue(BasePoller):
             select.POLLOUT: select.KQ_FILTER_WRITE ,
         }
         self._rev_event_map = {}
-        for ev , kev in self._event_map.iteritems():
+        for ev , kev in self._event_map.items():
             self._rev_event_map[kev] = ev
         self._poll = select.kqueue()
 
@@ -267,7 +267,7 @@ class Kqueue(BasePoller):
         look like the results of the other pollers
         """
         ret = []
-        for ev in self._poll.control(self._kev_table.values() , max_events ,
+        for ev in self._poll.control(list(self._kev_table.values()) , max_events ,
                 timeout):
             ret.append( (self._sock_map[ev.ident] , 
                 self._rev_event_map[ev.filter]) )
@@ -278,6 +278,6 @@ class Kqueue(BasePoller):
 
     def _get_kevent(self , sock , mask):
         filt = 0
-        for ev , kq_ev in self._event_map.iteritems():
+        for ev , kq_ev in self._event_map.items():
             filt |= kq_ev if ev & mask else 0
         return select.kevent(sock , filt)

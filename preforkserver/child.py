@@ -172,7 +172,7 @@ class BaseChild(object):
                 if sock == self._server_socket:
                     try:
                         self._handle_connection()
-                    except Exception, e:
+                    except Exception as e:
                         self._error(e)
                         self._shutdown(1)
                     self.requests_handled += 1
