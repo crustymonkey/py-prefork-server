@@ -93,7 +93,7 @@ class Manager(object):
         # Check for proper typing of child args
         if not isinstance(child_args, (tuple, list)):
             raise TypeError('child_args must be a tuple or list type')
-        if not isinstance(child_kwargs , dict):
+        if not isinstance(child_kwargs, dict):
             raise TypeError('child_kwargs must be a dict type')
 
         self._child_args = child_args
@@ -121,7 +121,7 @@ class Manager(object):
                 (protocol, self.validProtocols))
 
         self.listen = int(listen)
-        self.reuse_port = reuse_port and hasattr(socket , 'SO_REUSEPORT')
+        self.reuse_port = reuse_port and hasattr(socket, 'SO_REUSEPORT')
         self.server_socket = None
         self._stop = threading.Event()
         self._children = {}
@@ -154,9 +154,9 @@ class Manager(object):
         pid = os.fork()
 
         if not pid:
-            ch = self._ChildClass(self.max_requests , child_pipe , 
-                self.protocol , self.server_socket , manager ,
-                self._child_args , self._child_kwargs)
+            ch = self._ChildClass(self.max_requests, child_pipe, 
+                self.protocol, self.server_socket, manager ,
+                self._child_args, self._child_kwargs)
             parent_pipe.close()
             ch.run()
         else:
@@ -279,7 +279,7 @@ class Manager(object):
             if self._stop.isSet():
                 break
             try:
-                events = self._poll.poll(1 , 10)
+                events = self._poll.poll(1, 10)
             except OSError:
                 pass
             except IOError:

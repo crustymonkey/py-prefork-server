@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # This is a simple example of how to use the prefork server library.
@@ -19,7 +19,7 @@ class TestChild(pfs.BaseChild):
     self.reqsHandled => This is the number of requests this child has handled
     self.conn =>        The socket object if this is a tcp server, otherwise
  -                       this will be the actual payload of the udp packet
-    self.addr =>        An address tuple containing (ip , port)
+    self.addr =>        An address tuple containing (ip, port)
     self.closed =>      A boolean, mainly for internal use, which says whether
                         this child has been set to be closed
     self.error =>       A string error message, if set
@@ -30,14 +30,14 @@ class TestChild(pfs.BaseChild):
         This is called before binding in the child process if we are using
         SO_REUSEPORT
         """
-        print('pre-bind called in %s' % os.getpid())
+        print('pre-bind called in {}'.format(os.getpid()))
 
     def post_bind(self):
         """
         This is called after binding in the child process if we are using
         SO_REUSEPORT
         """
-        print('post-bind called in %s' % os.getpid())
+        print('post-bind called in {}'.format(os.getpid()))
 
     def initialize(self, *args, **kwargs):
         """
@@ -99,8 +99,8 @@ class TestChild(pfs.BaseChild):
         This is called after the connection is closed.  You can perform any
         maintenance/cleanup or post connection processing here.
         """
-        print('Connection is closed in %s, bye %s:%s' % (self.my_pid , 
-            self.ip, self.port))
+        print('Connection is closed in %s, bye {}:{}'.format(
+            self.my_pid, self.ip, self.port))
 
     def shutdown(self):
         """
@@ -112,7 +112,7 @@ class TestChild(pfs.BaseChild):
         Use this to do an pre-close cleanup, like possibly closing open
         files or a database connection.
         """
-        print('Shutting down child %d' % self.my_pid)
+        print('Shutting down child {}'.format(self.my_pid))
 
 
 #
@@ -210,9 +210,9 @@ def main():
     is init MyManager and call its run() method.  The signature for 
     the base Manager __init__ looks like this:
 
-        def __init__(self , child_class , max_servers=20 , min_servers=5 ,
-            min_spare_servers=2 , max_spare_servers=10 , max_requests=0 ,
-            bind_ip='127.0.0.1' , port=10000 , protocol='tcp' , listen=5 ,
+        def __init__(self, child_class, max_servers=20, min_servers=5 ,
+            min_spare_servers=2, max_spare_servers=10, max_requests=0 ,
+            bind_ip='127.0.0.1', port=10000, protocol='tcp', listen=5 ,
             reuse_port=False):
 
     The definition of those variables are:
@@ -235,7 +235,7 @@ def main():
     This is the same info that is available via a
     "pydoc preforkserver.Manager"
     """
-    manager = MyManager(TestChild, child_kwargs={'my_var': 'value'} , 
+    manager = MyManager(TestChild, child_kwargs={'my_var': 'value'}, 
         reuse_port=True)
     manager.run()
 

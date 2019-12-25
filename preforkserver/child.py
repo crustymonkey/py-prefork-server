@@ -34,15 +34,15 @@ class BaseChild(object):
     be overriden for use within the Manager
     """
 
-    def __init__(self , max_requests , child_conn , protocol ,
-            server_socket=None , manager=None , args=None , kwargs=None):
+    def __init__(self, max_requests, child_conn, protocol ,
+            server_socket=None, manager=None, args=None, kwargs=None):
         """
         Initialize the passed in child info and call the initialize() hook
         """
         # Add handling here for SO_REUSEPORT.  server_socket will be None
         # if we can reuse port
         if not server_socket:
-            if not hasattr(socket , 'SO_REUSEPORT'):
+            if not hasattr(socket, 'SO_REUSEPORT'):
                 self._error('server socket is None and SO_REUSEPORT is not '
                     'available.  Cannot start child process')
                 os._exit(1)
@@ -75,20 +75,20 @@ class BaseChild(object):
     @property
     def bound_address(self):
         """
-        Returns the bound server address as (ip , port) tuple
+        Returns the bound server address as (ip, port) tuple
         """
         return self.server_socket.getsockname()
 
-    def _get_server_socket(self , manager):
+    def _get_server_socket(self, manager):
         """
         Binds the server socket using SO_REUSEPORT and returns it
         """
-        addr = (manager.bind_ip , manager.port)
+        addr = (manager.bind_ip, manager.port)
         protocol = socket.SOCK_STREAM
         if manager.protocol == 'udp':
             protocol = socket.SOCK_DGRAM
-        s = socket.socket(socket.AF_INET , protocol)
-        s.setsockopt(socket.SOL_SOCKET , socket.SO_REUSEPORT , 1)
+        s = socket.socket(socket.AF_INET, protocol)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         s.bind(addr)
         if protocol == socket.SOCK_STREAM:
             s.listen(manager.listen)
@@ -168,7 +168,7 @@ class BaseChild(object):
             except select.error:
                 # This happens when the system call is interrupted
                 pass
-            for sock , e in events:
+            for sock, e in events:
                 if sock == self._server_socket:
                     try:
                         self._handle_connection()
@@ -196,7 +196,7 @@ class BaseChild(object):
     def run(self):
         self._loop()
 
-    def resp_to(self , msg):
+    def resp_to(self, msg):
         """
         This is a convenience function that will send the given msg string
         to either the tcp client connection or to the current address in
@@ -207,7 +207,7 @@ class BaseChild(object):
         if self.protocol == 'tcp':
             self.conn.sendall(msg)
         else:
-            self._server_socket.sendto(msg , self.address)
+            self._server_socket.sendto(msg, self.address)
 
     # Hooks to be overridden
     def pre_bind(self):

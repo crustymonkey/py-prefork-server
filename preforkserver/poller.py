@@ -33,12 +33,12 @@ import sys
 
 # This is a hack to make this work on systems where POLLIN and 
 # POLLPRI (OS X, apparently...) are not defined in the select module
-if not hasattr(select , 'POLLIN') or not hasattr(select , 'POLLPRI') or not \
-        hasattr(select , 'POLLOUT'):
-    setattr(select , 'POLLIN' , 1)
-    setattr(select , 'POLLPRI' , 2)
-    setattr(select , 'POLLOUT' , 4)
-    setattr(select , 'POLLERR' , 8)
+if not hasattr(select, 'POLLIN') or not hasattr(select, 'POLLPRI') or not \
+        hasattr(select, 'POLLOUT'):
+    setattr(select, 'POLLIN', 1)
+    setattr(select, 'POLLPRI', 2)
+    setattr(select, 'POLLOUT', 4)
+    setattr(select, 'POLLERR', 8)
 
 def get_poller(def_ev_mask=None):
     """
@@ -58,11 +58,11 @@ def get_poller(def_ev_mask=None):
         # never use windows for anything of this nature
         return Select(def_ev_mask)
     elif ( 'bsd' in p or p.startswith('darwin') ) and \
-            hasattr(select , 'KQ_FILTER_READ'):
+            hasattr(select, 'KQ_FILTER_READ'):
         return Kqueue(def_ev_mask)
-    elif p.startswith('linux') and hasattr(select , 'EPOLLIN'):
+    elif p.startswith('linux') and hasattr(select, 'EPOLLIN'):
         return Epoll(def_ev_mask)
-    elif p.startswith('linux') and hasattr(select , 'POLLIN'):
+    elif p.startswith('linux') and hasattr(select, 'POLLIN'):
         return Poll(def_ev_mask)
     else: 
         # Fall back to the worst option
@@ -73,7 +73,7 @@ class BasePoller(object):
     This defines the API for all concrete classes to use 
     """
     
-    def __init__(self , def_ev_mask=None):
+    def __init__(self, def_ev_mask=None):
         """
 
         def_ev_mask:int         The default event mask to be used for
@@ -84,27 +84,27 @@ class BasePoller(object):
         self.def_ev_mask = def_ev_mask
         self._sock_map = {}
 
-    def register(self , sock , event_mask=None):
+    def register(self, sock, event_mask=None):
         """
         sock:socket.socket      A socket object to register
         event_mask:int          The event mask to register this with
         """
         raise NotImplementedError('You must implement the register() method')
 
-    def unregister(self , sock):
+    def unregister(self, sock):
         """
         sock:socket.socket      A socket object to register
         """
         raise NotImplementedError('You must implement the unregister() method')
 
-    def poll(self , timeout=None , max_events=None):
+    def poll(self, timeout=None, max_events=None):
         """
         timeout:float           The timeout for the poll() call
         max_events:int          The maximum number of events to return
         """
         raise NotImplementedError('You must implement the poll() method')
 
-    def modify(self , sock , event_mask):
+    def modify(self, sock, event_mask):
         """
         sock:socket.socket      A socket object to register
         event_mask:int          The event mask to register this with
@@ -116,34 +116,34 @@ class BasePoller(object):
 
 class Poll(BasePoller):
 
-    def __init__(self , def_ev_mask=None):
-        BasePoller.__init__(self , def_ev_mask)
+    def __init__(self, def_ev_mask=None):
+        BasePoller.__init__(self, def_ev_mask)
         self._poll = select.poll()
 
-    def register(self , sock , event_mask=None):
+    def register(self, sock, event_mask=None):
         if self.def_ev_mask is None and event_mask is None:
             raise EventMaskError('You must specify an event mask for this '
                 'descriptor, or specify a default')
         ev_mask = event_mask if event_mask else self.def_ev_mask
-        self._poll.register(sock , ev_mask)
+        self._poll.register(sock, ev_mask)
         self._sock_map[sock.fileno()] = sock
 
-    def unregister(self , sock):
+    def unregister(self, sock):
         self._poll.unregister(sock)
         del self._sock_map[sock.fileno()]
 
-    def modify(self , sock , event_mask):
-        self._poll.modify(sock , event_mask)
+    def modify(self, sock, event_mask):
+        self._poll.modify(sock, event_mask)
 
-    def poll(self , timeout=None , max_events=None):
+    def poll(self, timeout=None, max_events=None):
         """
         I'm actually making this a little more convenient here by using a
         socket map to return the socket itself instead of just the
         file descriptor int
         """
         ret = []
-        for fd , ev in self._poll(timeout=timeout):
-            ret.append( (self._sock_map[fd] , ev) )
+        for fd, ev in self._poll(timeout=timeout):
+            ret.append( (self._sock_map[fd], ev) )
         return ret
 
     def close(self):
@@ -151,14 +151,14 @@ class Poll(BasePoller):
 
 class Epoll(Poll):
 
-    def __init__(self , def_ev_mask=None , sizehint=-1):
-        BasePoller.__init__(self , def_ev_mask)
+    def __init__(self, def_ev_mask=None, sizehint=-1):
+        BasePoller.__init__(self, def_ev_mask)
         self._poll = select.epoll(sizehint)
 
-    def poll(self , timeout=-1 , max_events=1):
+    def poll(self, timeout=-1, max_events=1):
         ret = []
-        for fd , ev in self._poll.poll(timeout=timeout , maxevents=max_events):
-            ret.append( (self._sock_map[fd] , ev) )
+        for fd, ev in self._poll.poll(timeout=timeout, maxevents=max_events):
+            ret.append( (self._sock_map[fd], ev) )
         return ret
 
     def close(self):
@@ -171,14 +171,14 @@ class Select(BasePoller):
     significant changes to make the interface unified
     """
 
-    def __init__(self , def_ev_mask=None):
-        BasePoller.__init__(self , def_ev_mask)
+    def __init__(self, def_ev_mask=None):
+        BasePoller.__init__(self, def_ev_mask)
         self._poll = None
         self._rlist = set()
         self._wlist = set()
         self._xlist = set()
 
-    def register(self , sock , event_mask=None):
+    def register(self, sock, event_mask=None):
         if self.def_ev_mask is None and event_mask is None:
             raise EventMaskError('You must specify an event mask for this '
                 'descriptor, or specify a default')
@@ -191,34 +191,34 @@ class Select(BasePoller):
         if ev_mask & select.POLLERR:
             self._xlist.add(sock)
 
-    def unregister(self , sock):
+    def unregister(self, sock):
         """
         Here we just remove the socket from any lists it is in
         """
-        for l in (self._rlist , self._wlist , self._xlist):
+        for l in (self._rlist, self._wlist, self._xlist):
             l.discard(sock)
 
-    def modify(self , sock , event_mask):
+    def modify(self, sock, event_mask):
         """
         Here we do a remove and add with the new mask
         """
         self.unregister(sock)
-        self.register(sock , event_mask)
+        self.register(sock, event_mask)
 
-    def poll(self , timeout=None , max_events=None):
+    def poll(self, timeout=None, max_events=None):
         ret = []
-        rlist , wlist , xlist = select.select(list(self._rlist) , 
-            list(self._wlist) , list(self._xlist) , timeout)
+        rlist, wlist, xlist = select.select(list(self._rlist), 
+            list(self._wlist), list(self._xlist), timeout)
         for read in rlist:
-            ret.append( (read , select.POLLIN) )
+            ret.append( (read, select.POLLIN) )
         for write in wlist:
-            ret.append( (read , select.POLLOUT) )
+            ret.append( (read, select.POLLOUT) )
         for err in xlist:
-            ret.append( (read , select.POLLERR) )
+            ret.append( (read, select.POLLERR) )
         return ret
 
     def close(self):
-        for l in (self._rlist , self._wlist , self._xlist):
+        for l in (self._rlist, self._wlist, self._xlist):
             l.clear()
 
 class Kqueue(BasePoller):
@@ -226,8 +226,8 @@ class Kqueue(BasePoller):
     This is another API that is quite different from the poll API.
     """
 
-    def __init__(self , def_ev_mask=None):
-        BasePoller.__init__(self , def_ev_mask)
+    def __init__(self, def_ev_mask=None):
+        BasePoller.__init__(self, def_ev_mask)
         self._kev_table = {}
         # We are only going to support a tiny subset of the kevent filters
         # that are available.  This will map standard polling events to
@@ -237,47 +237,47 @@ class Kqueue(BasePoller):
             select.POLLOUT: select.KQ_FILTER_WRITE ,
         }
         self._rev_event_map = {}
-        for ev , kev in self._event_map.items():
+        for ev, kev in self._event_map.items():
             self._rev_event_map[kev] = ev
         self._poll = select.kqueue()
 
-    def register(self , sock , event_mask=None):
+    def register(self, sock, event_mask=None):
         if self.def_ev_mask is None and event_mask is None:
             raise EventMaskError('You must specify an event mask for this '
                 'descriptor, or specify a default')
         ev_mask = event_mask if event_mask else self.def_ev_mask
-        ke = self._get_kevent(sock , ev_mask)
+        ke = self._get_kevent(sock, ev_mask)
         self._kev_table[sock.fileno()] = ke
         self._sock_map[sock.fileno()] = sock
 
-    def unregister(self , sock):
+    def unregister(self, sock):
         del self._kev_table[sock.fileno()]
         del self._sock_map[sock.fileno()]
 
-    def modify(self , sock , event_mask):
+    def modify(self, sock, event_mask):
         """
         Simply unregister and register this socket
         """
         self.unregister(sock)
-        self.register(sock , event_mask)
+        self.register(sock, event_mask)
 
-    def poll(self , timeout=None , max_events=1):
+    def poll(self, timeout=None, max_events=1):
         """
         We have to call kqueue.control() here and modify the results to
         look like the results of the other pollers
         """
         ret = []
-        for ev in self._poll.control(list(self._kev_table.values()) , max_events ,
+        for ev in self._poll.control(list(self._kev_table.values()), max_events ,
                 timeout):
-            ret.append( (self._sock_map[ev.ident] , 
+            ret.append( (self._sock_map[ev.ident], 
                 self._rev_event_map[ev.filter]) )
         return ret
 
     def close(self):
         self._poll.close()
 
-    def _get_kevent(self , sock , mask):
+    def _get_kevent(self, sock, mask):
         filt = 0
-        for ev , kq_ev in self._event_map.items():
+        for ev, kq_ev in self._event_map.items():
             filt |= kq_ev if ev & mask else 0
-        return select.kevent(sock , filt)
+        return select.kevent(sock, filt)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # This is a simple example of how to use the prefork server library.
@@ -19,7 +19,7 @@ class TestChild(pfs.BaseChild):
     self.reqsHandled => This is the number of requests this child has handled
     self.conn =>        The socket object if this is a tcp server, otherwise
  -                       this will be the actual payload of the udp packet
-    self.addr =>        An address tuple containing (ip , port)
+    self.addr =>        An address tuple containing (ip, port)
     self.closed =>      A boolean, mainly for internal use, which says whether
                         this child has been set to be closed
     self.error =>       A string error message, if set
@@ -194,9 +194,9 @@ def main():
     is init MyManager and call its run() method.  The signature for 
     the base Manager __init__ looks like this:
 
-        def __init__(self , child_class , max_servers=20 , min_servers=5 ,
-            min_spare_servers=2 , max_spare_servers=10 , max_requests=0 ,
-            bind_ip='127.0.0.1' , port=10000 , protocol='tcp' , listen=5 ,
+        def __init__(self, child_class, max_servers=20, min_servers=5 ,
+            min_spare_servers=2, max_spare_servers=10, max_requests=0 ,
+            bind_ip='127.0.0.1', port=10000, protocol='tcp', listen=5 ,
             reuse_port=False):
 
     The definition of those variables are:
