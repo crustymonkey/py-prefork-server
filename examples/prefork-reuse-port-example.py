@@ -30,14 +30,14 @@ class TestChild(pfs.BaseChild):
         This is called before binding in the child process if we are using
         SO_REUSEPORT
         """
-        print 'pre-bind called in %s' % os.getpid()
+        print('pre-bind called in %s' % os.getpid())
 
     def post_bind(self):
         """
         This is called after binding in the child process if we are using
         SO_REUSEPORT
         """
-        print 'post-bind called in %s' % os.getpid()
+        print('post-bind called in %s' % os.getpid())
 
     def initialize(self, *args, **kwargs):
         """
@@ -88,7 +88,7 @@ class TestChild(pfs.BaseChild):
         self.conn.sendall('220 Go Ahead\r\n')
         fromClient = self.conn.recv(4096)
         self.conn.sendall('Thank you for your info\r\n')
-        print fromClient
+        print(fromClient)
         # For UDP connections, you would do something like this
         # data = self.conn
         # self.resp_to('Got data: %s\r\n' % data.strip())
@@ -99,8 +99,8 @@ class TestChild(pfs.BaseChild):
         This is called after the connection is closed.  You can perform any
         maintenance/cleanup or post connection processing here.
         """
-        print 'Connection is closed in %s, bye %s:%s' % (self.my_pid , 
-            self.ip, self.port)
+        print('Connection is closed in %s, bye %s:%s' % (self.my_pid , 
+            self.ip, self.port))
 
     def shutdown(self):
         """
@@ -112,7 +112,7 @@ class TestChild(pfs.BaseChild):
         Use this to do an pre-close cleanup, like possibly closing open
         files or a database connection.
         """
-        print 'Shutting down child %d' % self.my_pid
+        print('Shutting down child %d' % self.my_pid)
 
 
 #
@@ -130,53 +130,53 @@ class MyManager(pfs.Manager):
         to the ip:port.  This is similar to the initialize() hook in the
         child class.  You can use this to set up global variables, etc.
         """
-        print 'preBind() called in manager'
+        print('preBind() called in manager')
 
     def post_bind(self):
         """
         As you might have guessed, this is called right after the accept()
         socket has been created and bound.
         """
-        print 'postBind() called in manager'
+        print('postBind() called in manager')
 
     def pre_signal_setup(self):
         """
         This is called before the signal handlers are set up
         """
-        print 'preSignalSetup() called in manager'
+        print('preSignalSetup() called in manager')
 
     def post_signal_setup(self):
         """
         This is called after the signal handlers have been set.  You can
         override the default signal handlers if you like.  More on that below.
         """
-        print 'postSignalSetup() called in manager'
+        print('postSignalSetup() called in manager')
 
     def pre_init_children(self):
         """
         This is called before the child processes are initialized
         """
-        print 'preInitChildren() called in manager'
+        print('preInitChildren() called in manager')
 
     def post_init_children(self):
         """
         This is called after the child processes are initialized
         """
-        print 'postInitChildren() called in manager'
+        print('postInitChildren() called in manager')
 
     def pre_loop(self):
         """
         This is the last hook before the main server loop takes over.  
         Any last minute setup items you wish to do should be done here
         """
-        print 'preLoop() called in manager'
+        print('preLoop() called in manager')
 
     def pre_server_close(self):
         """
         This is called before the server shuts down.  Any cleanup you wish
         to take care of before termination should be done here.
         """
-        print 'preServerClose() called in manager'
+        print('preServerClose() called in manager')
 
     # Signal handlers can also be overridden in the subclass of the manager.
     # I will just show you what the default implementation looks like
