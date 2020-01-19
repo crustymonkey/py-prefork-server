@@ -18,5 +18,5 @@
 #    along with py-prefork-server.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-version = (0, 4, 1)
+version = (0, 5, 0)
 str_version = '.'.join([ str(i) for i in  version ])

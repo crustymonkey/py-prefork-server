@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 #    Author: Jay Deiman
@@ -23,7 +23,7 @@
 
 from distutils.core import setup
 
-execfile('preforkserver/__version__.py')
+exec(open('preforkserver/__version__.py').read())
 
 setup(name='py-prefork-server',
       version=str_version,
