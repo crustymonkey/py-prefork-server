@@ -70,9 +70,9 @@ class TestChild(pfs.BaseChild):
         the actual packet payload.  If you have a udp server, and you wish
         to respond, you can use the resp_to() method to do so
         """
-        self.conn.sendall('220 Go Ahead\r\n')
+        self.conn.sendall(b'220 Go Ahead\r\n')
         fromClient = self.conn.recv(4096)
-        self.conn.sendall('Thank you for your info\r\n')
+        self.conn.sendall(b'Thank you for your info\r\n')
         print(fromClient)
         # For UDP connections, you would do something like this
         # data = self.conn

@@ -85,13 +85,13 @@ class TestChild(pfs.BaseChild):
         the actual packet payload.  If you have a udp server, and you wish
         to respond, you can use the resp_to() method to do so
         """
-        self.conn.sendall('220 Go Ahead\r\n')
+        self.conn.sendall(b'220 Go Ahead\r\n')
         fromClient = self.conn.recv(4096)
-        self.conn.sendall('Thank you for your info\r\n')
-        print(fromClient)
+        self.conn.sendall(b'Thank you for your info\r\n')
+        print('Client sent: {}'.format(fromClient.decode('utf-8')))
         # For UDP connections, you would do something like this
         # data = self.conn
-        # self.resp_to('Got data: %s\r\n' % data.strip())
+        # self.resp_to(b'Got data: {}\r\n'.format(data.strip()))
         # When this function exits, the connection is automatically closed
 
     def post_process_request(self):
@@ -99,7 +99,7 @@ class TestChild(pfs.BaseChild):
         This is called after the connection is closed.  You can perform any
         maintenance/cleanup or post connection processing here.
         """
-        print('Connection is closed in %s, bye {}:{}'.format(
+        print('Connection is closed in {}, bye {}:{}'.format(
             self.my_pid, self.ip, self.port))
 
     def shutdown(self):

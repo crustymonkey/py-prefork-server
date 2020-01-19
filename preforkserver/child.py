@@ -97,6 +97,7 @@ class BaseChild(object):
 
     def _close_conn(self):
         if self.conn and isinstance(self.conn, socket.SocketType):
+            self.conn.shutdown(socket.SHUT_RDWR)
             self.conn.close()
 
     def _waiting(self):
@@ -204,6 +205,10 @@ class BaseChild(object):
 
         msg:str         The message to respond to the client with
         """
+        if not isinstance(msg, (bytes, bytearray)):
+            # Convert to bytes before sending if not already bytes
+            msg = msg.encode('utf-8')
+
         if self.protocol == 'tcp':
             self.conn.sendall(msg)
         else:
